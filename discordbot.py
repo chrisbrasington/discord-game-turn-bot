@@ -254,6 +254,11 @@ async def end_game(ctx):
     print("Game inactive")
     await ctx.channel.send("Game over! Start new with /begin")
 
+# command test
+@bot.command()
+async def test(ctx):
+    await ctx.channel.send("Test!")
+
 # bot on message to channel
 @bot.event
 async def on_message(message):
@@ -290,7 +295,7 @@ async def on_message(message):
         elif("why" in message_text):
             await message.channel.send("Sorry.. go ask chat.openai")
         else:
-            await message.channel.send(f"Pardon? {message.author.mention}. Try /help")
+            await message.channel.send(f"{message_text}, you too {message.author.mention}.")
     else:
         await bot.process_commands(message)
 
@@ -316,7 +321,6 @@ async def on_message(message):
         # do not progress
         if not containsImage:
             print("Active player is chatting")
-
 
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:
