@@ -85,7 +85,7 @@ async def clear(ctx):
     os.remove(player_file)
     await ctx.channel.send("All players deleted")
 
-# command remove
+# command removes a player from the game
 @bot.command()
 async def remove(ctx, name: str):
     global index
@@ -137,7 +137,8 @@ async def next(ctx):
         else:
             await begin(ctx) 
 
-# message alarm
+# message alarm reminder for active player
+# do not message at night-time
 async def message_alarm(ctx, signal):
 
     if can_message_during_daytime():
@@ -157,7 +158,7 @@ async def message_alarm(ctx, signal):
         if game_active:
             signal.alarm(alarm_interval)
 
-# can message during daytime?
+# check if alarm can message because it is daytime?
 def can_message_during_daytime():
     start_time = time(hour=10, minute=0)  # Create a time object for 10:00 AM.
     end_time = time(hour=22, minute=0)  # Create a time object for 10:00 PM.
@@ -177,6 +178,7 @@ async def print_game(ctx):
 
     global game_active
 
+    # do not advance to new game here
     if not game_active:
         output = "Game is not active. Start with /begin"
         print(output)
@@ -187,6 +189,7 @@ async def print_game(ctx):
 
     SECONDS_PER_HOUR = 3600
 
+    # set alarm reminder for active player
     interval_text = format(alarm_interval/SECONDS_PER_HOUR, ".0f")
     alarm_text = f"setting alarm to {interval_text} hour."
     print(alarm_text)
@@ -198,6 +201,7 @@ async def print_game(ctx):
 
     global index
 
+    # no players to start
     if(len(game_list) == 0):
         await ctx.channel.send("Add players first with /add @\{name\} command")
         return
