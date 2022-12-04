@@ -6,8 +6,6 @@ file_name = "names.json"
 global name_list 
 name_list = None
 
-game_list = []
-
 global index
 index = 0
 
@@ -23,6 +21,10 @@ if os.path.exists(file_name):
 if name_list is None:
     name_list = []
 
+global game_list
+game_list = name_list.copy()
+random.shuffle(game_list)
+
 bot = commands.Bot(command_prefix="/", case_insensitive=True, intents=discord.Intents.all())
 
 @bot.command()
@@ -36,6 +38,9 @@ async def print_command(ctx):
 
 @bot.command()
 async def add(ctx, names: str):
+
+    print("add command:")
+    print(names)
 
     for name in names.split(","):
         if(name != ''):
@@ -53,7 +58,7 @@ async def clear(ctx):
     os.remove(file_name)
     await ctx.channel.send("Cleared")
 
-@bot.command()
+@bot.command(aliases=["go"])
 async def begin(ctx):
     global index 
     index = 0
@@ -77,17 +82,20 @@ async def next(ctx):
     else:
         await begin(ctx) 
 
+@bot.command(aliases=["who"])
+async def status(ctx):
+    await print_game(ctx)
+
 async def print_game(ctx):
     output = ""
 
     if(index == 0):
         output = "New Game begin!\n"
 
+    output += f"{game_list[index]} it's your turn!\n\n"
+
     i = 0
-    output += f"{game_list[i]} it's your turn!\n\n"
-
     for name in game_list:
-
         if i == index:
             output += "--> "
         else:
