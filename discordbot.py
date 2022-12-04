@@ -187,7 +187,9 @@ async def print_game(ctx):
 
     SECONDS_PER_HOUR = 3600
 
-    print(f"setting alarm to {alarm_interval/SECONDS_PER_HOUR} hour(s)")
+    interval_text = format(alarm_interval/SECONDS_PER_HOUR, ".0f")
+    alarm_text = f"setting alarm to {interval_text} hour."
+    print(alarm_text)
     signal.signal(signal.SIGALRM, lambda signum, frame: 
         # await alarm(ctx)
         asyncio.create_task(message_alarm(ctx, signal))
@@ -208,7 +210,8 @@ async def print_game(ctx):
 
     # new game
     if(index == 0):
-        output = "New Game begin!\n"
+        output = "New Game begin! - "
+        output += f"{alarm_text}\n\n"
 
     # current turn
     output += f"{game_list[index]} it's your turn!\n\n"
