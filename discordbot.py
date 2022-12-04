@@ -1,5 +1,7 @@
-import discord, json, os, random, re
+import asyncio, discord, json, os, random, re, signal
 from discord.ext import commands
+from datetime import datetime, time
+import time as regular_time
 
 # record all players to file
 player_file = "players.json"
@@ -7,6 +9,10 @@ name_list = None
 
 # track game state
 index = 0
+
+alarm_interval = 3600
+
+game_active = False
 
 # create bot with / commands
 bot = commands.Bot(command_prefix="/", case_insensitive=True, intents=discord.Intents.all())
@@ -107,6 +113,8 @@ async def remove(ctx, name: str):
 async def begin(ctx):
     global index 
     index = 0
+    global game_active
+    game_active = True
 
     global game_list 
     game_list = name_list.copy()
@@ -117,16 +125,75 @@ async def begin(ctx):
 # command next/skip
 @bot.command(aliases=["skip"])
 async def next(ctx):
+    global game_active
     global index
-    if(index+1 != len(game_list)):
+    print(index)
+    if(index != len(game_list)-1):
         index += 1
         await print_game(ctx)
     else:
-        await begin(ctx) 
+        if(game_active):
+            await end_game(ctx)
+        else:
+            await begin(ctx) 
+
+# message alarm
+async def message_alarm(ctx, signal):
+
+    if can_message_during_daytime():
+        if game_active:
+            output = f"{game_list[index]} this is your alarm - it is your turn"  
+            print(output)
+            output += "\n\n"
+            await ctx.channel.send(output)
+            
+            # reoccuring
+            signal.alarm(alarm_interval)
+        else:
+            print("game inactive - ending alarm")
+    else:
+        print("Ignoring alarm, continuing...")
+
+        if game_active:
+            signal.alarm(alarm_interval)
+
+# can message during daytime?
+def can_message_during_daytime():
+    start_time = time(hour=10, minute=0)  # Create a time object for 10:00 AM.
+    end_time = time(hour=22, minute=0)  # Create a time object for 10:00 PM.
+
+    current_time = datetime.now().time()  # Get the current time as a time object.
+
+    return start_time < current_time < end_time
+
+# command end
+@bot.command()
+async def end(ctx):
+    await end_game(ctx)
 
 # command print, status
 @bot.command(name="print", aliases=["status", "who"])
 async def print_game(ctx):
+
+    global game_active
+
+    if not game_active:
+        output = "Game is not active. Start with /begin"
+        print(output)
+        await ctx.channel.send(output)
+        return
+
+    game_active = True
+
+    SECONDS_PER_HOUR = 3600
+
+    print(f"setting alarm to {alarm_interval/SECONDS_PER_HOUR} hour(s)")
+    signal.signal(signal.SIGALRM, lambda signum, frame: 
+        # await alarm(ctx)
+        asyncio.create_task(message_alarm(ctx, signal))
+    )
+    signal.alarm(alarm_interval)
+
     global index
 
     if(len(game_list) == 0):
@@ -166,6 +233,11 @@ async def print_simple(ctx):
 
 # end game without starting again
 async def end_game(ctx):
+    global index
+    global game_active
+    game_active = False
+    index = len(game_list)-1
+    print("Game inactive")
     await ctx.channel.send("Game over! Start new with /begin")
 
 # bot on message to channel
@@ -199,7 +271,7 @@ async def on_message(message):
 
     # if active player responding
     if(str(message.author.id) in game_list[index]):
-        print("Active player responding")
+        print("Active player is responding")
 
         containsImage = False
 
@@ -218,7 +290,7 @@ async def on_message(message):
                         await next(message)
         # do not progress
         if not containsImage:
-            print("Active player is chatting, did not send image")
+            print("Active player is chatting")
 
 
 # Open the file in read-only mode.
