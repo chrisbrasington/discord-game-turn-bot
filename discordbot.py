@@ -1,42 +1,58 @@
 import discord, json, os, random, re
 from discord.ext import commands
 
-file_name = "names.json"
-
-global name_list 
+# record all players to file
+player_file = "players.json"
 name_list = None
 
-global index
+# track game state
 index = 0
 
-if os.path.exists(file_name):
-    # Open the file in read mode
-    with open(file_name, "r") as f:
-        # Read the JSON string from the file
-        json_string = f.read()
-
-    # Convert the JSON string to a list of strings
-    name_list = json.loads(json_string)
-
-if name_list is None:
-    name_list = []
-
-global game_list
-game_list = name_list.copy()
-random.shuffle(game_list)
-
+# create bot with / commands
 bot = commands.Bot(command_prefix="/", case_insensitive=True, intents=discord.Intents.all())
 
-@bot.command()
+# initialize players file read
+def init():
+
+    global name_list
+    global index
+    index = 0
+
+    # read from file
+    if os.path.exists(player_file):
+        # Open the file in read mode
+        with open(player_file, "r") as f:
+            # Read the JSON string from the file
+            json_string = f.read()
+
+        # Convert the JSON string to a list of strings
+        name_list = json.loads(json_string)
+
+    if name_list is None:
+        name_list = []
+
+    # shuffle game list (silent begin)
+    global game_list
+    game_list = name_list.copy()
+    random.shuffle(game_list)
+    print("Silent Ready")
+    print(game_list)
+
+# save players to file
+async def save():
+    print("Saving..")
+    # Open the file in write mode
+    with open(player_file, "w") as f:
+        # Write the JSON string to the file      
+        f.write(json.dumps(name_list))
+
+# command hello
+@bot.command(description="Display simple hello")
 async def hello(ctx):
     await ctx.send("Hello, world!")
 
-@bot.command(name="print")
-async def print_command(ctx):
-    print(str(name_list))
-    await ctx.channel.send(str(name_list))
-
-@bot.command()
+# command add player
+@bot.command(description="Adds player to game")
 async def add(ctx, names: str):
 
     print("add command:")
@@ -44,21 +60,50 @@ async def add(ctx, names: str):
 
     for name in names.split(","):
         if(name != ''):
-            name_list.append(name.strip())
-    
+            if(name in name_list):
+                await ctx.channel.send(f"{name} already exists")
+            else:
+                name_list.append(name.strip())
+                game_list.append(name.strip())
     name_list.sort()
 
     await save()
-    await print_command(ctx)
+    await print_game(ctx)
 
+# command clear 
 @bot.command()
 async def clear(ctx):
     name_list.clear()
+    game_list.clear()
     print(name_list)
-    os.remove(file_name)
-    await ctx.channel.send("Cleared")
+    os.remove(player_file)
+    await ctx.channel.send("All players deleted")
 
-@bot.command(aliases=["go"])
+# command remove
+@bot.command()
+async def remove(ctx, name: str):
+    global index
+    found = False
+    if name in name_list:
+        found = True
+        name_list.remove(name)
+    if name in game_list:
+        game_list.remove(name)
+
+    if found:
+        await save()
+        await ctx.channel.send(f"Removed {name}")
+
+        if(index != 0):
+            if(index > len(game_list)):
+                index = len(game_list)-1
+            await print_game(ctx)
+
+    else:
+        await ctx.channel.send(f"{name} not found")
+
+# command being
+@bot.command(aliases=["go", "start", "random", "randomize"])
 async def begin(ctx):
     global index 
     index = 0
@@ -69,11 +114,8 @@ async def begin(ctx):
 
     await(print_game(ctx))
 
-@bot.command()
-async def skip(ctx):
-    await next(ctx)
-
-@bot.command()
+# command next/skip
+@bot.command(aliases=["skip"])
 async def next(ctx):
     global index
     if(index+1 != len(game_list)):
@@ -82,18 +124,29 @@ async def next(ctx):
     else:
         await begin(ctx) 
 
-@bot.command(aliases=["who"])
-async def status(ctx):
-    await print_game(ctx)
-
+# command print, status
+@bot.command(name="print", aliases=["status", "who"])
 async def print_game(ctx):
+    global index
+
+    if(len(game_list) == 0):
+        await ctx.channel.send("Add players first with /add @\{name\} command")
+        return
+    
+    # account for player removal mid-game
+    if(index > len(game_list)-1):
+        index = len(game_list)-1
+
     output = ""
 
+    # new game
     if(index == 0):
         output = "New Game begin!\n"
 
+    # current turn
     output += f"{game_list[index]} it's your turn!\n\n"
 
+    # all players
     i = 0
     for name in game_list:
         if i == index:
@@ -107,14 +160,11 @@ async def print_game(ctx):
 
     await ctx.channel.send(output)
 
+# print only what exists in saved name list (not game list)
+async def print_simple(ctx):
+    await ctx.channel.send(str(name_list))
 
-async def save():
-    print("Saving..")
-    # Open the file in write mode
-    with open(file_name, "w") as f:
-        # Write the JSON string to the file      
-        f.write(json.dumps(name_list))
-
+# bot on message to channel
 @bot.event
 async def on_message(message):
     
@@ -126,21 +176,27 @@ async def on_message(message):
     
     print(f"{message.author.mention} sent {message_text}")
 
+    # message inteded for bot
     if bot.user in message.mentions:
         print("Message inteded for bot")
 
+    # bot was mentioned
     if bot.user in message.mentions:
+        # respond to hello
         if ("hello" in message_text or "hi" in message_text):
             # Construct the response message.
             response = f"Hello {message.author.mention}! How are you doing?"
             await message.channel.send(response)
+        # not understood
         else:
-            await message.channel.send(f"Pardon? {message.author.mention}")
+            await message.channel.send(f"Pardon? {message.author.mention}. Try /help")
     else:
         await bot.process_commands(message)
 
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:
+
+    init()
 
     # Read the contents of the file.
     bot_token = f.read().strip()
