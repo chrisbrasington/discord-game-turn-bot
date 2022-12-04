@@ -164,6 +164,10 @@ async def print_game(ctx):
 async def print_simple(ctx):
     await ctx.channel.send(str(name_list))
 
+# end game without starting again
+async def end_game(ctx):
+    await ctx.channel.send("Game over! Start new with /begin")
+
 # bot on message to channel
 @bot.event
 async def on_message(message):
@@ -178,7 +182,7 @@ async def on_message(message):
 
     # message inteded for bot
     if bot.user in message.mentions:
-        print("Message inteded for bot")
+        print("Message intended for bot")
 
     # bot was mentioned
     if bot.user in message.mentions:
@@ -192,6 +196,30 @@ async def on_message(message):
             await message.channel.send(f"Pardon? {message.author.mention}. Try /help")
     else:
         await bot.process_commands(message)
+
+    # if active player responding
+    if(str(message.author.id) in game_list[index]):
+        print("Active player responding")
+
+        containsImage = False
+
+        # image detection
+        if message.attachments:
+            for attachment in message.attachments:
+                # if attachment.is_image:
+                if attachment.filename.endswith((".png", ".jpg", ".gif")):
+                    print("Progressing game")
+                    containsImage = True
+
+                    # progress
+                    if(index == len(game_list)-1):
+                        await end_game(message)
+                    else:
+                        await next(message)
+        # do not progress
+        if not containsImage:
+            print("Active player is chatting, did not send image")
+
 
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:
