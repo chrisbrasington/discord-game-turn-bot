@@ -15,7 +15,10 @@ alarm_interval = 3600
 game_active = False
 
 # create bot with / commands
-bot = commands.Bot(command_prefix="/", case_insensitive=True, intents=discord.Intents.all())
+bot = commands.Bot(
+    command_prefix="/", 
+    case_insensitive=True, 
+    intents=discord.Intents.all())
 
 # initialize players file read
 def init():
@@ -62,7 +65,6 @@ async def hello(ctx):
 async def add(ctx, names: str):
 
     print("add command:")
-    print(names)
 
     for name in names.split(","):
         if(name != ''):
@@ -74,13 +76,17 @@ async def add(ctx, names: str):
     name_list.sort()
 
     await save()
+    await print_simple(ctx)
     await print_game(ctx)
 
 # command clear 
 @bot.command()
 async def clear(ctx):
+    global index
+    index = 0
     name_list.clear()
     game_list.clear()
+
     print(name_list)
     os.remove(player_file)
     await ctx.channel.send("All players deleted")
@@ -99,6 +105,7 @@ async def remove(ctx, name: str):
     if found:
         await save()
         await ctx.channel.send(f"Removed {name}")
+        await print_simple(ctx)
 
         if(index != 0):
             if(index > len(game_list)):
@@ -254,6 +261,13 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
+    print(message.channel)
+    image_responding_channel = False
+
+    if "bot" in str(message.channel) or "ai-telephone" in str(message.channel) :
+       print("correct channel")
+       image_responding_channel = true
+
     # Use a regular expression to remove any Discord ID from message.content.
     message_text = re.sub(r"<@\d+>\s*", "", message.content)
     
@@ -271,13 +285,17 @@ async def on_message(message):
             response = f"Hello {message.author.mention}! How are you doing?"
             await message.channel.send(response)
         # not understood
+        elif("right" in message_text):
+            await message.channel.send("Fuck yeah")
+        elif("why" in message_text):
+            await message.channel.send("Sorry.. go ask chat.openai")
         else:
             await message.channel.send(f"Pardon? {message.author.mention}. Try /help")
     else:
         await bot.process_commands(message)
 
     # if active player responding
-    if(str(message.author.id) in game_list[index]):
+    if(image_responding_channel and str(message.author.id) in game_list[index]):
         print("Active player is responding")
 
         containsImage = False
