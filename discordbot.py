@@ -271,7 +271,7 @@ async def on_message(message):
 
     if "bot" in str(message.channel) or "ai-telephone" in str(message.channel) :
        print("correct channel")
-       image_responding_channel = true
+       image_responding_channel = True
 
     # Use a regular expression to remove any Discord ID from message.content.
     message_text = re.sub(r"<@\d+>\s*", "", message.content)
