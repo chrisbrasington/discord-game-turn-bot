@@ -291,7 +291,7 @@ async def on_message(message):
             await message.channel.send(response)
         # not understood
         elif("right" in message_text):
-            await message.channel.send("Fuck yeah")
+            await message.channel.send("Fuck yeah {message.author.mention}")
         elif("why" in message_text):
             await message.channel.send("Sorry.. go ask chat.openai")
         else:
