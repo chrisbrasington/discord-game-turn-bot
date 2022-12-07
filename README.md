@@ -116,5 +116,8 @@ You can also type /help category for more info on a category.
 
 ## File Structure
 
-- `bot.py` - main script file
+- `discordbot.py` - main script, defines commands
+- `classes/gamestate.py` seralizable game state object, game actions, and print outs (including to discord)
 - `players.json` - file containing a list of players in the game
+- `gamestate.json` - file containing prior game state, saved on change
+- `test.json` - test goblins
