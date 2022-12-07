@@ -414,8 +414,7 @@ async def on_message(message):
     # if active player responding
     if len(game_list) > 0:
         if(image_responding_channel and str(message.author.id) in game_list[index]):
-            print("Active player is responding")
-
+            # print("Active player is responding")
             containsImage = False
 
             # image detection
