@@ -30,6 +30,7 @@ def init():
     global name_list
     global index
     index = 0
+    game_active = False
 
     # read from file
     if os.path.exists(player_file):
