@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import asyncio, discord, json, os, random, re, signal
 from discord.ext import commands
 from datetime import datetime, time
