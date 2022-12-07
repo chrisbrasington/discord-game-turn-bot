@@ -69,6 +69,8 @@ class GameState:
             output += '\nGame is active'
         else:
             output += '\nGame is not active'
+        if self.silent:
+            output += '\nGame is silent (no @ s)'
         output += f'\nIndex is {self.index}'
         if self.alarm_hours != 0:
             output += f'\nAlarm is set to  {self.alarm_hours}'
