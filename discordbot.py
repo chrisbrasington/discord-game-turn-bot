@@ -321,7 +321,7 @@ async def listen(ctx):
     print(f"/listen {game_channel}")
     await ctx.channel.send(f"Now listening on {ctx.channel}")
 
-@bot.command()
+@bot.command(name="gametest", aliases=["testmode"])
 async def gametest(ctx):
     global name_list
     global test    
