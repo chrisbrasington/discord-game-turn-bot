@@ -32,8 +32,10 @@ async def init():
     global game_channel
     global name_list
     global index
+    global name_mapping
     index = 0
     game_active = False
+    name_mapping = {}
 
     # read from file
     if os.path.exists(player_file):
