@@ -320,7 +320,9 @@ async def config(ctx):
     if alarm_interval == 0:
         await ctx.channel.send("Alarm is disabled")
     else:
-        plural = alarm_interval/3600 > 1 ? "s" : ""
+        plural = ""
+        if alarm_interval>3600 > 1:
+            plural = "s"
         await ctx.channel.send(f"Alarm is set to {alarm_interval/3600} hour{plural}")
 
     if game_active:
