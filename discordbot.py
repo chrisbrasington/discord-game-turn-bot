@@ -414,6 +414,8 @@ async def gametest(ctx):
     global game_active
     global name_list
     global test    
+    global name_mapping
+    name_mapping = {}
     game_active = False
     test = True
     await ctx.channel.send("Switching to test mode")
