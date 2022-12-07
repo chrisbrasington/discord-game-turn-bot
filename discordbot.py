@@ -310,7 +310,7 @@ async def print_game(ctx):
 
 # print only what exists in saved name list (not game list)
 async def print_simple(ctx):
-    await ctx.channel.send(str(name_list))
+    await ctx.channel.send(f"`str(name_list)`")
 
 # end game without starting again
 async def end_game(ctx):
