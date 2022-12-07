@@ -207,7 +207,7 @@ async def on_message(ctx):
             await ctx.channel.send(response)
         # not understood
         elif("right" in message_text):
-            await ctx.channel.send("Fuck yeah {ctx.author.mention}")
+            await ctx.channel.send(f"Fuck yeah {ctx.author.mention}")
         elif("why" in message_text or "what" in message_text):
             await ctx.channel.send("Sorry.. go ask chat.openai")
         elif("config" in message_text):
