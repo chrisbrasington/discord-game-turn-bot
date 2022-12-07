@@ -310,7 +310,7 @@ async def print_game(ctx):
 
 # print only what exists in saved name list (not game list)
 async def print_simple(ctx):
-    await ctx.channel.send("Reading stored usernames (without spamming @'s)...")
+    await ctx.channel.send("Reading stored usernames (without spamming @'s)... one moment please...")
     await ctx.channel.send(await get_simple())
 
 async def get_simple():
