@@ -8,10 +8,10 @@ class GameState:
     channel = None
     SECONDS_PER_HOUR = 3600
 
-    def __init__(self, active=False, alarm_hours=2, channel="", index=0, is_test=False, names=[], players=[]):
+    def __init__(self, active=False, alarm_hours=2, channel="", index=0, is_test=False, names=[], players=[], silent = False):
         self.active = active
         self.is_alarm_active = False
-        self.silent = False
+        self.silent = silent
         self.silent = True
 
         self.names = names
@@ -308,7 +308,8 @@ class GameStateEncoder(json.JSONEncoder):
                 'channel': obj.channel,
                 'is_test': obj.is_test,
                 'index': obj.index,
-                'active': obj.active
+                'active': obj.active,
+                'silent': obj.silent
             }
         # This is important: call the superclass method to raise an exception
         # for unsupported types
@@ -337,6 +338,7 @@ class GameStateDecoder(json.JSONDecoder):
         is_test = data['is_test']
         index = data['index']
         obj.active = data['active']
+        obj.silent = data['silent']
         game_state = GameState(names, players, alarm_hours, channel, is_test, index)
 
         return game_state

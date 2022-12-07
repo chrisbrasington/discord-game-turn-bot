@@ -162,6 +162,7 @@ async def silent(ctx):
     global state
     state.silent = not state.silent
     await ctx.channel.send(f"Silent: {state.silent}")
+    await state.Save()
 
 # bot on message to channel
 @bot.event
