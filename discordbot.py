@@ -483,8 +483,6 @@ async def on_message(message):
             await config(message)
         else:
             await message.channel.send(f"{message_text}, you too {message.author.mention}.")
-    else:
-        await bot.process_commands(message)
 
     # if active player responding
     if len(game_list) > 0:
@@ -510,6 +508,10 @@ async def on_message(message):
             # do not progress
             if not containsImage:
                 print("Active player is chatting")
+
+    if message.startswith('/'):
+        print(f"{message.author.mention} sent {message_text}")
+        await bot.process_commands(message)
 
 
 # Open the file in read-only mode.
