@@ -9,6 +9,7 @@ player_file = "players.json"
 channel_file = "channel.txt"
 name_list = None
 game_channel = None
+test = False
 
 # track game state
 index = 0
@@ -63,6 +64,10 @@ def init():
 
 # save players to file
 async def save():
+    global test
+    if test:
+        return
+
     print("Saving..")
     # Open the file in write mode
     with open(player_file, "w") as f:
@@ -102,25 +107,26 @@ async def add(ctx, names: str):
     await print_game(ctx)
 
 # command clear 
-@bot.command()
-async def clear(ctx):
-    if(not listening(ctx)):
-        return
-
-    global index
-    index = 0
-    name_list.clear()
-    game_list.clear()
-
-    print(name_list)
-    os.remove(player_file)
-    await ctx.channel.send("All players deleted")
+# @bot.command()
+# async def clear(ctx):
+#     if(not listening(ctx)):
+#         return
+    # global index
+    # index = 0
+    # name_list.clear()
+    # game_list.clear()
+    # print(name_list)
+    # os.remove(player_file)
+    # await ctx.channel.send("All players deleted")
+    # await ctx.channel.send("No")
 
 # command removes a player from the game
 @bot.command()
 async def remove(ctx, name: str):
     if(not listening(ctx)):
         return
+    
+    global game_active
 
     global index
     found = False
@@ -135,9 +141,7 @@ async def remove(ctx, name: str):
         await ctx.channel.send(f"Removed {name}")
         await print_simple(ctx)
 
-        if(index != 0):
-            if(index > len(game_list)):
-                index = len(game_list)-1
+        if game_active:
             await print_game(ctx)
 
     else:
@@ -283,9 +287,10 @@ async def end_game(ctx):
     global index
     global game_active
     game_active = False
+    prior_index = index
     index = len(game_list)-1
     print("Game inactive")
-    await ctx.channel.send("Game over! Start new with /begin")
+    await ctx.channel.send(f"Game over! Congratulations {game_list[prior_index]}! Start new with /begin")
 
 # command test
 @bot.command()
@@ -316,6 +321,31 @@ async def listen(ctx):
     print(f"/listen {game_channel}")
     await ctx.channel.send(f"Now listening on {ctx.channel}")
 
+@bot.command()
+async def gametest(ctx):
+    global name_list
+    global test    
+    test = True
+    await ctx.channel.send("Switching to test mode")
+
+     # read from file
+    if os.path.exists("test.json"):
+        # Open the file in read mode
+        with open("test.json", "r") as f:
+            # Read the JSON string from the file
+            json_string = f.read()
+
+        # Convert the JSON string to a list of strings
+        name_list = json.loads(json_string)
+
+    await config(ctx)
+
+@bot.command()
+async def restart (ctx):
+    init()
+    await ctx.channel.send("Restarted")
+    await config(ctx)
+
 # bot on message to channel
 @bot.event
 async def on_message(message):
@@ -325,12 +355,13 @@ async def on_message(message):
     if message.author == bot.user:
         return
     
-    image_responding_channel = message.channel == game_channel
+    image_responding_channel = str(message.channel) == game_channel
 
     # Use a regular expression to remove any Discord ID from message.content.
     message_text = re.sub(r"<@\d+>\s*", "", message.content)
     
     # print(f"{message.author.mention} sent {message_text}")
+    # print(image_responding_channel)
 
     # message inteded for bot
     if bot.user in message.mentions:
@@ -346,7 +377,7 @@ async def on_message(message):
         # not understood
         elif("right" in message_text):
             await message.channel.send("Fuck yeah {message.author.mention}")
-        elif("why" in message_text):
+        elif("why" in message_text or "what" in message_text):
             await message.channel.send("Sorry.. go ask chat.openai")
         elif("config" in message_text):
             await config(message)
@@ -356,27 +387,28 @@ async def on_message(message):
         await bot.process_commands(message)
 
     # if active player responding
-    if(image_responding_channel and str(message.author.id) in game_list[index]):
-        print("Active player is responding")
+    if len(game_list) > 0:
+        if(image_responding_channel and str(message.author.id) in game_list[index]):
+            print("Active player is responding")
 
-        containsImage = False
+            containsImage = False
 
-        # image detection
-        if message.attachments:
-            for attachment in message.attachments:
-                # if attachment.is_image:
-                if attachment.filename.endswith((".png", ".jpg", ".gif")):
-                    print("Progressing game")
-                    containsImage = True
+            # image detection
+            if message.attachments:
+                for attachment in message.attachments:
+                    # if attachment.is_image:
+                    if attachment.filename.endswith((".png", ".jpg", ".gif")):
+                        print("Progressing game")
+                        containsImage = True
 
-                    # progress
-                    if(index == len(game_list)-1):
-                        await end_game(message)
-                    else:
-                        await next(message)
-        # do not progress
-        if not containsImage:
-            print("Active player is chatting")
+                        # progress
+                        if(index == len(game_list)-1):
+                            await end_game(message)
+                        else:
+                            await next(message)
+            # do not progress
+            if not containsImage:
+                print("Active player is chatting")
 
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:
