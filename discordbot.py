@@ -231,7 +231,7 @@ async def print_game(ctx):
         await ctx.channel.send(output)
         return
 
-    SECONDS_PER_HOUR = 3600
+    SECONDS_PER_HOUR = 3600*2
 
     # set alarm reminder for active player
     interval_text = format(alarm_interval/SECONDS_PER_HOUR, ".0f")
