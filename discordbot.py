@@ -89,7 +89,7 @@ async def begin(ctx):
     await state.Begin(ctx, bot)
 
 # command next/skip
-@bot.command(brief="Optionally progress to next player. Game will automatically progress when the active player posts an image",aliases=["skip"])
+@bot.command(brief="Optionally progress to next player.",aliases=["skip"])
 async def next(ctx):
     if(not is_listening(ctx)):
         return
