@@ -222,8 +222,8 @@ async def alarm(ctx, new_alarm: str):
     global alarm_interval
     number = int(new_alarm)
 
-    if number > 4:
-        await ctx.channel.send("Yeah let's not go bigger than 4 hours. You can send 0 to disable")
+    if number > 8:
+        await ctx.channel.send("Yeah let's not go bigger than 8 hours. You can send 0 to disable")
         return
 
     if number == 0:
