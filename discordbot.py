@@ -219,6 +219,7 @@ async def end(ctx):
 
 @bot.command()
 async def alarm(ctx, new_alarm: str):
+    global alarm_interval
     number = int(new_alarm)
 
     if number > 4:
