@@ -185,16 +185,18 @@ async def next(ctx):
 async def message_alarm(ctx, signal):
 
     if can_message_during_daytime():
-        if game_active:
-            output = f"{game_list[index]} this is your alarm - it is your turn"  
-            print(output)
-            output += "\n\n"
-            await ctx.channel.send(output)
-            
-            # reoccuring
-            signal.alarm(alarm_interval)
-        else:
-            print("game inactive - ending alarm")
+
+        if alarm_interval != 0:
+            if game_active:
+                output = f"{game_list[index]} this is your alarm - it is your turn"  
+                print(output)
+                output += "\n\n"
+                await ctx.channel.send(output)
+                
+                # reoccuring
+                signal.alarm(alarm_interval)
+            else:
+                print("game inactive - ending alarm")
     else:
         print("Ignoring alarm, continuing...")
 
@@ -229,12 +231,10 @@ async def alarm(ctx, new_alarm: str):
 
     if number == 0:
         await ctx.channel.send("Disabling alarm")
-        if game_active:
-            await ctx.channel.send("I didn't test disabling mid-game. It probably alerts once then stops. Thanks..")
+        alarm_interval = 0
     else:
         await ctx.channel.send(f"Setting alarm to {number} hour(s)")
-
-    alarm_interval = 3600*number
+        alarm_interval = 3600*number
 
 # command print, status
 @bot.command(name="print", aliases=["status", "who"])
