@@ -317,6 +317,11 @@ async def config(ctx):
     else:    
         await ctx.channel.send(f"Listening on {game_channel}")
     
+    if alarm_interval == 0:
+        await ctx.channel.send("Alarm is disabled")
+    else
+        await ctx.channel.send(f"Alarm is set to {alarm_interval/3600} hour(s)")
+
     if game_active:
         await ctx.channel.send("Game is active.")
     else:
