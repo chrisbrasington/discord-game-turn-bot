@@ -509,7 +509,7 @@ async def on_message(message):
             if not containsImage:
                 print("Active player is chatting")
 
-    if message.startswith('/'):
+    if message.content.startswith('/'):
         print(f"{message.author.mention} sent {message_text}")
         await bot.process_commands(message)
 
