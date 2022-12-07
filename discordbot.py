@@ -10,6 +10,7 @@ channel_file = "channel.txt"
 name_list = None
 game_channel = None
 test = False
+name_mapping = {}
 
 # track game state
 index = 0
@@ -26,7 +27,7 @@ bot = commands.Bot(
     intents=discord.Intents.all())
 
 # initialize players file read
-def init():
+async def init():
     global game_active
     global game_channel
     global name_list
@@ -153,6 +154,11 @@ async def remove(ctx, name: str):
 # command being
 @bot.command(aliases=["go", "start", "random", "randomize"])
 async def begin(ctx):
+    global name_mapping
+    if name_mapping == {}:
+        await ctx.channel.send("Getting game ready...")
+        _ = await get_simple()
+
     if(not listening(ctx)):
         return
     global index 
@@ -250,6 +256,7 @@ async def print_game(ctx):
         return
     global game_active
     global alarm_interval
+    global name_mapping
 
     SECONDS_PER_HOUR = 3600
 
@@ -292,7 +299,7 @@ async def print_game(ctx):
         output += f"{alarm_text}\n\n"
 
     # current turn
-    output += f"{game_list[index]} it's your turn!\n\n"
+    # output += f"{game_list[index]} it's your turn!\n\n"
 
     # all players
     i = 0
@@ -302,7 +309,18 @@ async def print_game(ctx):
         else:
             output += "    "
         i += 1
-        output += f"{name}\n"
+
+        if '@' in name:
+            # id = int(name.replace("<", "").replace("@", "").replace(">", ""))
+            # user = await bot.fetch_user(id)
+            # m = ctx.guild.get_member(id)
+
+            user = name_mapping[name]
+
+            output += f'{user.name}\n'
+
+        else: 
+            output += f"{name}\n"
 
     print(output)
 
@@ -310,19 +328,33 @@ async def print_game(ctx):
 
 # print only what exists in saved name list (not game list)
 async def print_simple(ctx):
-    await ctx.channel.send("Reading stored usernames (without spamming @'s)... one moment please...")
+    global name_mapping
+    if(name_mapping == {}):
+        await ctx.channel.send("Reading usernames first time... one moment please...")
+
     await ctx.channel.send(await get_simple())
 
 async def get_simple():
+    global name_mapping
     output_list = []
+
+    if(name_mapping == {}):
+        print('reading usernames from server...')
+        for name in name_list:
+            if '@' in name:
+                id = int(name.replace("<", "").replace("@", "").replace(">", ""))
+                user = await bot.fetch_user(id)
+                name_mapping[name] = user
+            else:
+                name_mapping[name] = name
+
     for name in name_list:
-        if '@' in name:
-            id = int(name.replace("<", "").replace("@", "").replace(">", ""))
-            user = await bot.fetch_user(id)
-            output_list.append(f'{user.name}#{user.discriminator}')
-        else:
+        user = name_mapping[name]
+        if name == user:
             output_list.append(name)
-    
+        else:
+            output_list.append(f'{user.name}#{user.discriminator}')
+
     print(output_list)
     return str(output_list)
 
@@ -479,7 +511,7 @@ async def on_message(message):
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:
 
-    init()
+    asyncio.run(init())
 
     # Read the contents of the file.
     bot_token = f.read().strip()
