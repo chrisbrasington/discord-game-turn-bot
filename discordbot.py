@@ -14,6 +14,7 @@ test = False
 # track game state
 index = 0
 
+# alarm interval default
 alarm_interval = 3600*2
 
 game_active = False
@@ -221,6 +222,7 @@ async def end(ctx):
         return
     await end_game(ctx)
 
+# set alarm
 @bot.command()
 async def alarm(ctx, new_alarm: str):
     global game_active
@@ -341,7 +343,7 @@ async def config(ctx):
         await ctx.channel.send("Game is not active.")
     await print_simple(ctx)
 
-# command test
+# command listen - sets game channel
 @bot.command()
 async def listen(ctx):
     # always listen
@@ -355,6 +357,7 @@ async def listen(ctx):
     print(f"/listen {game_channel}")
     await ctx.channel.send(f"Now listening on {ctx.channel}")
 
+# command test - sets players to test players
 @bot.command(name="gametest", aliases=["testmode", "goblinmode"])
 async def gametest(ctx):
     global game_active
@@ -376,6 +379,7 @@ async def gametest(ctx):
 
     await config(ctx)
 
+# command restart - can unload test to real players
 @bot.command()
 async def restart (ctx):
     init()

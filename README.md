@@ -16,19 +16,36 @@ The game progresses as follows:
 
 5. The game can be resumed at a later time by running the script again and using the `/begin` command to start the game from the last saved state.
 
+# configuration
+
+`/config` will show the current configuration of the game
+
+```
+Listening on 🤖bot-commands
+Alarm is set to 2.0 hours
+Game is not active.
+['Grawgith', 'Gribble', 'Grubblin', '@Christopher (yoetrian)']
+```
+
+`/alarm 4` will set alarm to 4 hours (default is 2)
+`/alarm 0` will disable the alarm
+
+Changing the alarm mid-game will take effect with next player or after prior set alarm goes off
+
 ## Discord Bot
 
 This is a Discord bot written in Python. It uses the `discord.py` library to interact with the Discord API. The bot is initialized with the `commands.Bot` class, which allows it to respond to `/` commands.
 
-## Features
+## Commands
 
 - `/hello` - sends a simple "Hello, world!" message
 - `/add [names]` - adds one or more players to the game, separated by commas
-- `/clear` - removes all players from the game and deletes the `players.json` file
 - `/remove [name]` - removes a player from the game
 - `/begin`, `/go`, `/start`, `/random`, or `/randomize` - starts the game by shuffling the player list and displaying the first player
 - `/next` or `/skip` - skips to the next player in the game
 - `/end` - ends the game and displays the final player
+- `/config` - shows game configuration
+- `/alarm #` - sets alarm interval
 
 ## Usage
 
@@ -42,32 +59,3 @@ This is a Discord bot written in Python. It uses the `discord.py` library to int
 - `players.json` - file containing a list of players in the game
 
 ## Commands
-
-### `/hello`
-
-Sends a simple "Hello, world!" message.
-
-### `/add [names]`
-
-Adds one or more players to the game, separated by commas. If a player with the same name already exists, a message will be sent indicating that the player already exists. The player list is saved to the `players.json` file and the updated list is printed.
-
-### `/clear`
-
-Removes all players from the game and deletes the `players.json` file. A message is sent indicating that all players have been deleted.
-
-### `/remove [name]`
-
-Removes a player from the game. If the player is found, they are removed from the player list and the updated list is printed. If the player is not found, a message is sent indicating that the player was not found.
-
-### `/begin`, `/go`, `/start`, `/random`, or `/randomize`
-
-Starts the game by shuffling the player list and printing the first player.
-
-### `/next` or `/skip`
-
-Skips to the next player in the game and prints their name. If the current player is the last player in the list, a message is sent indicating that the game has ended.
-
-### `/end`
-
-Ends the game and prints the final player.
-
