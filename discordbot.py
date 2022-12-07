@@ -236,6 +236,9 @@ async def alarm(ctx, new_alarm: str):
         await ctx.channel.send(f"Setting alarm to {number} hour(s)")
         alarm_interval = 3600*number
 
+        if game_active: 
+            await ctx.channel.send(f"Congrats {ctx.author}, you hit an edge case of changing the alarm mid-game. I will not start a new alarm until the next player in the game..")
+
 # command print, status
 @bot.command(name="print", aliases=["status", "who"])
 async def print_game(ctx):
