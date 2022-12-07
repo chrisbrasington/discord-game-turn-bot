@@ -8,7 +8,7 @@ class GameState:
     channel = None
     SECONDS_PER_HOUR = 3600
 
-    def __init__(self, active=False, alarm_hours=2, channel="", index=0, is_test=False, names=[], players=[], silent = False):
+    def __init__(self, active=False, alarm_hours=2, channel='🤖bot-commands', index=0, is_test=False, names=[], players=[], silent = False):
         self.active = active
         self.is_alarm_active = False
         self.silent = silent
@@ -20,7 +20,7 @@ class GameState:
         self.alarm_hours = alarm_hours
         self.is_test = is_test
         self.index = index
-        self.channel = channel #'🤖bot-commands'
+        self.channel = channel 
         self.Read(self.player_file)
 
     def Read(self, file):
