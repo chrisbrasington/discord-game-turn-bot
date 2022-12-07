@@ -28,8 +28,8 @@ async def init():
     await state.Shuffle()
     print("Silent Ready")
 
-    for name in state.names:
-        await state.ReadUser(bot, name)
+    # for name in state.names:
+    #     await state.ReadUser(bot, name)
 
     print(await state.Serialize())
 
@@ -81,7 +81,7 @@ async def remove(ctx, name: str):
 @bot.command(aliases=["go", "start", "random", "randomize"])
 async def begin(ctx):
     global state
-    await state.Begin(ctx)
+    await state.Begin(ctx, bot)
 
 # command next/skip
 @bot.command(aliases=["skip"])
@@ -89,7 +89,7 @@ async def next(ctx):
     if(not is_listening(ctx)):
         return
     global state
-    await state.Next(ctx)
+    await state.Next(ctx, bot)
 
 # message alarm reminder for active player
 # do not message at night-time
@@ -180,10 +180,9 @@ async def gametest(ctx):
 @bot.command()
 async def restart (ctx):
     global state
-    state.ReadPlayers()
+    await state.Restart(bot)
 
     await ctx.channel.send("Restarted")
-    await state.ReadAllUsers(bot)
     await state.DisplayConfig(ctx, bot)
 
 # bot on message to channel
@@ -245,11 +244,11 @@ async def on_message(ctx):
                         containsImage = True
 
                         # progress
-                        if(index == len(game_list)-1):
+                        if(state.index == len(state.players)-1):
                             await state.End(ctx)
                             break
                         else:
-                            await state.Next(ctx)
+                            await state.Next(ctx, bot)
                             break
             # do not progress
             if not containsImage:
@@ -257,7 +256,7 @@ async def on_message(ctx):
 
     if ctx.content.startswith('/'):
         print(f"{ctx.author} sent {message_text}")
-        await bot.process_commands(message)
+        await bot.process_commands(ctx)
 
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:

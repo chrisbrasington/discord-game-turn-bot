@@ -17,38 +17,16 @@ class GameState:
         self.is_test = False
         self.index = 0
         self.channel = '🤖bot-commands'
+        self.Read(self.player_file)
 
-        # self.ReadPlayers()
-        self.is_test = True
-        self.ReadTestPlayers()
-
-    def ReadPlayers(self):
+    def Read(self, file):
         self.names = []
         self.players = []
-        print(f'Reading Players File {self.player_file}')
-        self.test = False
+        print(f'Reading Players File: {file}')
         # read from file
-        if os.path.exists(self.player_file):
+        if os.path.exists(file):
         # Open the file in read mode
-            with open(self.player_file, 'r') as f:
-                # Read the JSON string from the file
-                json_string = f.read()
-
-            print(json_string)
-
-            # Convert the JSON string to a list of strings
-            self.names = json.loads(json_string)
-            self.players = self.names.copy()
-
-    def ReadTestPlayers(self):
-        self.names = []
-        self.players = []
-        print(f'Reading Test Players File: {self.test_file}')
-        self.test = True
-        # read from file
-        if os.path.exists(self.test_file):
-        # Open the file in read mode
-            with open(self.test_file, 'r') as f:
+            with open(file, 'r') as f:
                 # Read the JSON string from the file
                 json_string = f.read()
 
@@ -58,6 +36,9 @@ class GameState:
             self.names = json.loads(json_string)
             self.players = self.names.copy()
     
+    async def Restart(self, bot):
+        self.TestMode(False, bot)
+
     async def TestMode(self, is_test: bool, bot):
         self.names = []
         self.players = []
@@ -68,8 +49,7 @@ class GameState:
         else:
             self.ReadPlayers()
 
-        for name in self.names:
-            await self.ReadUser(bot, name)
+        await state.ReadAllUsers(bot)
 
     async def DisplayConfig(self, ctx, bot):
 
@@ -79,7 +59,7 @@ class GameState:
             output = 'Not listening to any channel'
         else:
             output = f'Listening on {self.channel}'
-        if self.test:
+        if self.is_test:
             output += '\nTEST MODE ON'
         if self.active:
             output += '\nGame is active'
@@ -178,7 +158,10 @@ class GameState:
         await self.Save()
         return removed
 
-    async def Begin(self, ctx):
+    async def Begin(self, ctx, bot):
+        # safer
+        await self.ReadAllUsers(bot)
+
         print('Starting game...')
         self.players = self.names.copy()
         random.shuffle(self.players)
@@ -258,7 +241,7 @@ class GameState:
 
         await ctx.channel.send(output)
 
-    async def Next(self, ctx):
+    async def Next(self, ctx, bot):
         if(self.index != len(self.players)-1):
             self.index += 1
             await self.Display(ctx)
@@ -266,7 +249,7 @@ class GameState:
             if(self.active):
                 await self.End(ctx)
             else:
-                await self.Begin(ctx) 
+                await self.Begin(ctx, bot) 
 
 class GameStateEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -281,7 +264,7 @@ class GameStateEncoder(json.JSONEncoder):
             # 'mapping': obj.mapping,   # NOT SERIALIZABLE!!    
                 'alarm_hours': obj.alarm_hours,
                 'channel': obj.channel,
-                'test': obj.test,
+                'is_test': obj.is_test,
                 'index': obj.index
             }
         # This is important: call the superclass method to raise an exception
