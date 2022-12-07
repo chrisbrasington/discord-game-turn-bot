@@ -104,8 +104,11 @@ async def add(ctx, names: str):
             if(name in name_list):
                 await ctx.channel.send(f"{name} already exists")
             else:
-                name_list.append(name.strip())
-                game_list.append(name.strip())
+                name = name.strip()
+                name_list.append(name)
+                game_list.append(name)
+
+                read_username_from_server(name)
     # name_list = name_list.sort()
 
     await save()
@@ -336,6 +339,17 @@ async def print_simple(ctx):
 
     await ctx.channel.send(await get_simple())
 
+async def read_username_from_server(name: str):
+    global name_mapping
+    if '@' in name:
+        id = int(name.replace("<", "").replace("@", "").replace(">", ""))
+        user = await bot.fetch_user(id)
+        name_mapping[name] = user
+    else:
+        name_mapping[name] = name
+
+    return name_mapping[name]
+
 async def get_simple():
     global name_mapping
     output_list = []
@@ -343,12 +357,7 @@ async def get_simple():
     if(name_mapping == {}):
         print('reading usernames from server...')
         for name in name_list:
-            if '@' in name:
-                id = int(name.replace("<", "").replace("@", "").replace(">", ""))
-                user = await bot.fetch_user(id)
-                name_mapping[name] = user
-            else:
-                name_mapping[name] = name
+            await read_username_from_server(name)
 
     for name in name_list:
         user = name_mapping[name]
@@ -510,7 +519,10 @@ async def on_message(message):
                 print("Active player is chatting")
 
     if message.content.startswith('/'):
-        print(f"{message.author.mention} sent {message_text}")
+
+        # user = message.author.mention
+
+        print(f"{message.author} sent {message_text}")
         await bot.process_commands(message)
 
 
