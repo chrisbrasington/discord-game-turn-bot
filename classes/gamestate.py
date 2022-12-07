@@ -1,4 +1,5 @@
-import json, os, random
+import asyncio, json, os, random, signal
+from datetime import datetime, time
 
 class GameState:
     game_state_file = 'gamestate.json'
@@ -9,6 +10,8 @@ class GameState:
 
     def __init__(self):
         self.active = False
+        self.is_alarm_active = False
+        self.silent = False
 
         self.names = []
         self.players = []
@@ -185,16 +188,15 @@ class GameState:
             return
 
         alarm_text = 'Alarm is disabled'
-        # if self.alarm_hours > 0:
-        #     # set alarm reminder for active player
-        #     interval_text = format(self.alarm_hours/self.SECONDS_PER_HOUR, ".0f")
-        #     alarm_text = f"setting alarm to {interval_text} hour(s)"
-        #     print(alarm_text)
-        #     signal.signal(signal.SIGALRM, lambda signum, frame: 
-        #         # await alarm(ctx)
-        #         asyncio.create_task(message_alarm(ctx, signal))
-        #     )
-        #     signal.alarm(alarm_interval)
+        if self.alarm_hours > 0 and not self.is_alarm_active:
+            # set alarm reminder for active player
+            alarm_text = f"setting alarm to {self.alarm_hours} hour(s)"
+            print(alarm_text)
+            signal.signal(signal.SIGALRM, lambda signum, frame: 
+                asyncio.create_task(self.AlarmAlert(ctx, signal))
+            )
+            print(f'alarming in {self.alarm_hours} hour(s)')
+            signal.alarm(self.alarm_hours*self.SECONDS_PER_HOUR)
 
         # no players to start
         if(len(self.players) == 0):
@@ -213,8 +215,10 @@ class GameState:
             output += f"{alarm_text}\n\n"
 
         # current turn
-        output += f"{self.players[self.index]} it's your turn!\n\n"
-        # output += 'New player turn\n\n'
+        if self.silent:
+            output += 'New player turn!\n\n'
+        else:
+            output += f"{self.players[self.index]} it's your turn!\n\n"
 
         # all players
         i = 0
@@ -242,6 +246,7 @@ class GameState:
         await ctx.channel.send(output)
 
     async def Next(self, ctx, bot):
+        self.is_alarm_active = False
         if(self.index != len(self.players)-1):
             self.index += 1
             await self.Display(ctx)
@@ -250,6 +255,36 @@ class GameState:
                 await self.End(ctx)
             else:
                 await self.Begin(ctx, bot) 
+  
+    async def AlarmAlert(self, ctx, signal):
+        print('Alarm sounding!')
+        if self.CanMessageDuringDaytime():
+            if self.alarm_hours > 0:
+                if self.active:
+                    output = f"{self.players[self.index]} this is your alarm - it is your turn"  
+                    print(output)
+                    output += "\n\n"
+                    await ctx.channel.send(output)
+                else:
+                    print("game inactive - ending alarm")
+        else:
+                print("Ignoring alarm, continuing...")
+
+        if self.active and self.alarm_hours > 0:
+            print('Restarting alarm...')
+            signal.signal(signal.SIGALRM, lambda signum, frame: 
+                asyncio.create_task(self.AlarmAlert(ctx, signal))
+            )
+            print(f'resetting - alarming in {self.alarm_hours} hour(s)')
+            signal.alarm(self.alarm_hours*self.SECONDS_PER_HOUR)
+
+    def CanMessageDuringDaytime(self):
+        start_time = time(hour=10, minute=0)  # Create a time object for 10:00 AM.
+        end_time = time(hour=22, minute=0)  # Create a time object for 10:00 PM.
+
+        current_time = datetime.now().time()  # Get the current time as a time object.
+
+        return start_time < current_time < end_time    
 
 class GameStateEncoder(json.JSONEncoder):
     def default(self, obj):

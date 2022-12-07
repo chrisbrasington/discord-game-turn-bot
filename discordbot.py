@@ -91,38 +91,6 @@ async def next(ctx):
     global state
     await state.Next(ctx, bot)
 
-# message alarm reminder for active player
-# do not message at night-time
-async def message_alarm(ctx, signal):
-
-    if can_message_during_daytime():
-
-        if alarm_interval != 0:
-            if game_active:
-                output = f"{game_list[index]} this is your alarm - it is your turn"  
-                print(output)
-                output += "\n\n"
-                await ctx.channel.send(output)
-                
-                # reoccuring
-                signal.alarm(alarm_interval)
-            else:
-                print("game inactive - ending alarm")
-    else:
-        print("Ignoring alarm, continuing...")
-
-        if game_active:
-            signal.alarm(alarm_interval)
-
-# check if alarm can message because it is daytime?
-def can_message_during_daytime():
-    start_time = time(hour=10, minute=0)  # Create a time object for 10:00 AM.
-    end_time = time(hour=22, minute=0)  # Create a time object for 10:00 PM.
-
-    current_time = datetime.now().time()  # Get the current time as a time object.
-
-    return start_time < current_time < end_time
-
 # command end
 @bot.command()
 async def end(ctx):
@@ -133,8 +101,7 @@ async def end(ctx):
 # set alarm
 @bot.command()
 async def alarm(ctx, new_alarm: str):
-    global game_active
-    global alarm_interval
+    global state
     number = int(new_alarm)
 
     if number > 8:
@@ -143,12 +110,12 @@ async def alarm(ctx, new_alarm: str):
 
     if number == 0:
         await ctx.channel.send("Disabling alarm")
-        alarm_interval = 0
+        state.alarm_hours = 0
     else:
         await ctx.channel.send(f"Setting alarm to {number} hour(s)")
-        alarm_interval = 3600*number
+        state.alarm_hours = number
 
-        if game_active: 
+        if state.active: 
             await ctx.channel.send(f"Congrats {ctx.author.mention}, you hit an edge case of changing the alarm mid-game. I will not start a new alarm until the next player in the game..")
 
 # command print, status
@@ -184,6 +151,12 @@ async def restart (ctx):
 
     await ctx.channel.send("Restarted")
     await state.DisplayConfig(ctx, bot)
+
+@bot.command()
+async def silent(ctx):
+    global state
+    state.silent = not state.silent
+    await ctx.channel.send(f"Silent: {state.silent}")
 
 # bot on message to channel
 @bot.event
