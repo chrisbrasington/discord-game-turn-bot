@@ -219,6 +219,7 @@ async def end(ctx):
 
 @bot.command()
 async def alarm(ctx, new_alarm: str):
+    global game_active
     global alarm_interval
     number = int(new_alarm)
 
@@ -228,6 +229,8 @@ async def alarm(ctx, new_alarm: str):
 
     if number == 0:
         await ctx.channel.send("Disabling alarm")
+        if game_active:
+            await ctx.channel.send("I didn't test disabling mid-game. It probably alerts once then stops. Thanks..")
     else:
         await ctx.channel.send(f"Setting alarm to {number} hour(s)")
 
@@ -253,7 +256,7 @@ async def print_game(ctx):
     if alarm_interval > 0:
         # set alarm reminder for active player
         interval_text = format(alarm_interval/SECONDS_PER_HOUR, ".0f")
-        alarm_text = f"setting alarm to {interval_text} hour."
+        alarm_text = f"setting alarm to {interval_text} hour(s)"
         print(alarm_text)
         signal.signal(signal.SIGALRM, lambda signum, frame: 
             # await alarm(ctx)
