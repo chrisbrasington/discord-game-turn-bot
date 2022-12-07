@@ -310,7 +310,23 @@ async def print_game(ctx):
 
 # print only what exists in saved name list (not game list)
 async def print_simple(ctx):
-    await ctx.channel.send(f"`str(name_list)`")
+    await ctx.channel.send(await get_simple())
+
+async def get_simple():
+    output_list = []
+    for name in name_list:
+        if '@' in name:
+            id = int(name.replace("<", "").replace("@", "").replace(">", ""))
+            print(id)
+            user = await bot.fetch_user(id)
+            output_list.append(user)
+            print(user)
+        else:
+            output_list.append(name)
+    
+    print(output_list)
+    return str(output_list)
+
 
 # end game without starting again
 async def end_game(ctx):
@@ -410,6 +426,7 @@ async def on_message(message):
     
     # print(f"{message.author.mention} sent {message_text}")
     # print(image_responding_channel)
+    # await print_simple(message)
 
     # message inteded for bot
     if bot.user in message.mentions:
@@ -459,6 +476,7 @@ async def on_message(message):
             if not containsImage:
                 print("Active player is chatting")
 
+
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:
 
@@ -469,3 +487,4 @@ with open("bot_token.txt", "r") as f:
 
     # bot.run(bot_token)
     bot.run(bot_token)
+
