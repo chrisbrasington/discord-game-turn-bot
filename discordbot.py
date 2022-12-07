@@ -297,9 +297,9 @@ async def config(ctx):
         await ctx.channel.send(f"Listening on {game_channel}")
     
     if game_active:
-        await ctx.channel.send("Game is not active.")
-    else:
         await ctx.channel.send("Game is active.")
+    else:
+        await ctx.channel.send("Game is not active.")
     await print_simple(ctx)
 
 # command test
