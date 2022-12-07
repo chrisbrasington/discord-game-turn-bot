@@ -239,6 +239,7 @@ async def print_game(ctx):
     if(not listening(ctx)):
         return
     global game_active
+    global alarm_interval
 
     # do not advance to new game here
     if not game_active:
