@@ -107,5 +107,3 @@ This is a Discord bot written in Python. It uses the `discord.py` library to int
 
 - `bot.py` - main script file
 - `players.json` - file containing a list of players in the game
-
-## Commands
