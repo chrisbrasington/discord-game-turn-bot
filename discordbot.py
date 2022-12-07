@@ -149,7 +149,7 @@ async def gametest(ctx):
     await state.DisplayConfig(ctx, bot)
 
 # command restart - can unload test to real players
-@bot.command(brief="Resets players (used for swapping out of test mode")
+@bot.command(brief="Resets players (used for swapping out of test mode)")
 async def restart (ctx):
     global state
     await state.Restart(bot)
