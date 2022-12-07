@@ -453,8 +453,10 @@ async def on_message(message):
                         # progress
                         if(index == len(game_list)-1):
                             await end_game(message)
+                            break
                         else:
                             await next(message)
+                            break
             # do not progress
             if not containsImage:
                 print("Active player is chatting")
