@@ -357,8 +357,10 @@ async def listen(ctx):
 
 @bot.command(name="gametest", aliases=["testmode", "goblinmode"])
 async def gametest(ctx):
+    global game_active
     global name_list
     global test    
+    game_active = False
     test = True
     await ctx.channel.send("Switching to test mode")
 
