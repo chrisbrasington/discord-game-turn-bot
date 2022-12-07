@@ -299,7 +299,7 @@ async def print_game(ctx):
         output += f"{alarm_text}\n\n"
 
     # current turn
-    # output += f"{game_list[index]} it's your turn!\n\n"
+    output += f"{game_list[index]} it's your turn!\n\n"
 
     # all players
     i = 0
