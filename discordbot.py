@@ -397,8 +397,10 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if(message.channel.type == 'dm'):
-        message.reply(f"Don't send me a direct message {message.author.mention}, ya weirdo.")
+    print('!')
+
+    if(message.channel.type == discord.ChannelType.private):
+        await message.channel.send(f"Don't send me a direct message {message.author.mention}, ya weirdo.")
         print(f"{message.author.mention} send a dm, replying and ignoring")
         return
     
