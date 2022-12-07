@@ -396,6 +396,11 @@ async def on_message(message):
 
     if message.author == bot.user:
         return
+
+    if(message.channel.type == 'dm'):
+        message.reply(f"Don't send me a direct message {message.author.mention}, ya weirdo.")
+        print(f"{message.author.mention} send a dm, replying and ignoring")
+        return
     
     image_responding_channel = str(message.channel) == game_channel
 
