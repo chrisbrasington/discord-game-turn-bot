@@ -317,30 +317,30 @@ class GameStateEncoder(json.JSONEncoder):
         # for unsupported types
         return super().default(obj)
 
-class GameStateDecoder(json.JSONDecoder):
-    def decode(self, json_str):
-        # Parse the JSON string into a dictionary
-        print()
-        print()
-        print(json_str)
-        print()
-        print()
-        data = json.loads(json_str)
-        print()
-        print()
-        print(data)
-        print('~~~~~~~~~~')
+# class GameStateDecoder(json.JSONDecoder):
+#     def decode(self, json_str):
+#         # Parse the JSON string into a dictionary
+#         print()
+#         print()
+#         print(json_str)
+#         print()
+#         print()
+#         data = json.loads(json_str)
+#         print()
+#         print()
+#         print(data)
+#         print('~~~~~~~~~~')
 
-        # Extract the values from the dictionary and use them to
-        # initialize a new GameState object
-        names = data['names']
-        players = data['players']
-        alarm_hours = data['alarm_hours']
-        channel = data['channel']
-        is_test = data['is_test']
-        index = data['index']
-        obj.active = data['active']
-        obj.silent = data['silent']
-        game_state = GameState(names, players, alarm_hours, channel, is_test, index)
+#         # Extract the values from the dictionary and use them to
+#         # initialize a new GameState object
+#         names = data['names']
+#         players = data['players']
+#         alarm_hours = data['alarm_hours']
+#         channel = data['channel']
+#         is_test = data['is_test']
+#         index = data['index']
+#         obj.active = data['active']
+#         obj.silent = data['silent']
+#         game_state = GameState(names, players, alarm_hours, channel, is_test, index)
 
-        return game_state
+#         return game_state
