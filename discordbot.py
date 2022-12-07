@@ -317,10 +317,8 @@ async def get_simple():
     for name in name_list:
         if '@' in name:
             id = int(name.replace("<", "").replace("@", "").replace(">", ""))
-            print(id)
             user = await bot.fetch_user(id)
             output_list.append(user)
-            print(user)
         else:
             output_list.append(name)
     
