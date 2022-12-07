@@ -8,18 +8,19 @@ class GameState:
     channel = None
     SECONDS_PER_HOUR = 3600
 
-    def __init__(self):
-        self.active = False
+    def __init__(self, active=False, alarm_hours=2, channel="", index=0, is_test=False, names=[], players=[]):
+        self.active = active
         self.is_alarm_active = False
         self.silent = False
+        self.silent = True
 
-        self.names = []
-        self.players = []
-        self.mapping = {}
-        self.alarm_hours = 2
-        self.is_test = False
-        self.index = 0
-        self.channel = '🤖bot-commands'
+        self.names = names
+        self.players = players
+        self.mapping = {} # not serialize
+        self.alarm_hours = alarm_hours
+        self.is_test = is_test
+        self.index = index
+        self.channel = channel #'🤖bot-commands'
         self.Read(self.player_file)
 
     def Read(self, file):
@@ -68,6 +69,7 @@ class GameState:
             output += '\nGame is active'
         else:
             output += '\nGame is not active'
+        output += f'\nIndex is {self.index}'
         if self.alarm_hours != 0:
             output += f'\nAlarm is set to  {self.alarm_hours}'
         else:
@@ -117,7 +119,7 @@ class GameState:
         if self.is_test:
             print('Save, skipping in test mode')
             return
-        print('Saving..')
+        print('Saving...')
 
         with open(self.player_file, "w") as f:
             # Write the JSON string to the file      
@@ -163,7 +165,9 @@ class GameState:
 
     async def Begin(self, ctx, bot):
         # safer
-        await self.ReadAllUsers(bot)
+        if self.mapping == {}:
+            await self.ReadAllUsers(bot)
+        self.index = 0
 
         print('Starting game...')
         self.players = self.names.copy()
@@ -171,12 +175,14 @@ class GameState:
         print(f'shuffled: {self.players}')
         self.active = True
         await self.Display(ctx)
+        await self.Save()
 
     async def End(self, ctx):
         self.active = False
         print('Ending game...')
         await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}! Start new with /begin")
         self.index = 0
+        await self.Save()
 
     async def Display(self, ctx):
         print('Printing game...')
@@ -249,6 +255,7 @@ class GameState:
         self.is_alarm_active = False
         if(self.index != len(self.players)-1):
             self.index += 1
+            await self.Save()
             await self.Display(ctx)
         else:
             if(self.active):
@@ -300,8 +307,36 @@ class GameStateEncoder(json.JSONEncoder):
                 'alarm_hours': obj.alarm_hours,
                 'channel': obj.channel,
                 'is_test': obj.is_test,
-                'index': obj.index
+                'index': obj.index,
+                'active': obj.active
             }
         # This is important: call the superclass method to raise an exception
         # for unsupported types
         return super().default(obj)
+
+class GameStateDecoder(json.JSONDecoder):
+    def decode(self, json_str):
+        # Parse the JSON string into a dictionary
+        print()
+        print()
+        print(json_str)
+        print()
+        print()
+        data = json.loads(json_str)
+        print()
+        print()
+        print(data)
+        print('~~~~~~~~~~')
+
+        # Extract the values from the dictionary and use them to
+        # initialize a new GameState object
+        names = data['names']
+        players = data['players']
+        alarm_hours = data['alarm_hours']
+        channel = data['channel']
+        is_test = data['is_test']
+        index = data['index']
+        obj.active = data['active']
+        game_state = GameState(names, players, alarm_hours, channel, is_test, index)
+
+        return game_state

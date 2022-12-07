@@ -19,17 +19,22 @@ async def init():
     global bot, state
     state = GameState()
 
+    if os.path.exists('gamestate.json'):
+        with open('gamestate.json', 'r') as f:
+            data = json.load(f)
+            state = GameState(**data)
+            print('Prior State Loaded from file')
+    else:
+        print('No prior state')
+
     if state.channel is None:
         print("Not is_listening on any channel")
     else:
         print(f"is_listening on {state.channel}")
 
     # shuffle game list (silent begin)
-    await state.Shuffle()
-    print("Silent Ready")
-
-    # for name in state.names:
-    #     await state.ReadUser(bot, name)
+    # await state.Shuffle()
+    # print("Silent Ready")
 
     print(await state.Serialize())
 
@@ -171,6 +176,12 @@ async def on_message(ctx):
         await ctx.channel.send("Play games with me in your discord channel, check out the readme at https://github.com/chrisbrasington/discord-game-turn-bot")
         print(f"{ctx.author.mention} send a dm, replying and ignoring")
         return
+
+    # might be missing due to game state loading
+    if(state.mapping == {}):
+        print('Reading all users first time')
+        await ctx.channel.send('Reading usernames first time... one moment please...')
+        await state.ReadAllUsers(bot)
     
     image_responding_channel = str(ctx.channel) == state.channel
 
