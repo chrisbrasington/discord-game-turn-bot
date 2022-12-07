@@ -227,8 +227,6 @@ async def print_game(ctx):
         await ctx.channel.send(output)
         return
 
-    game_active = True
-
     SECONDS_PER_HOUR = 3600
 
     # set alarm reminder for active player
