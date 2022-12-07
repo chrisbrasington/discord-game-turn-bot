@@ -86,16 +86,27 @@ This is a Discord bot written in Python. It uses the `discord.py` library to int
 
 ## Commands
 
-- `/hello` - sends a simple "Hello, world!" message
-- `/add [names]` - adds one or more players to the game, separated by commas
-- `/remove [name]` - removes a player from the game
-- `/begin`, `/go`, `/start`, `/random`, or `/randomize` - starts the game by shuffling the player list and displaying the first player
-- `/next` or `/skip` - skips to the next player in the game
-- `/end` - ends the game and displays the final player
-- `/config` - shows game configuration
-- `/alarm #` - sets alarm interval
-- `/goblinmode` or `/testmode` - swaps players for test players
-- `/restart` - swaps to players and resets
+`/help`
+```
+​No Category:
+  add      Adds player to game. If game is active, goes to end of list
+  alarm    Set player alarm in hours
+  begin    Shuffles and starts new game
+  config   Shows configuration of bot
+  end      End game
+  gametest aka /goblinmode - swaps players for test goblins
+  hello    Hello, World
+  help     Shows this message
+  listen   Set listening to this channel
+  next     Optionally progress to next player.
+  print    Prints current game status
+  remove   Removes player from game
+  restart  Resets players (used for swapping out of test mode)
+  silent   Toggles if @ messaging is used during turns
+
+Type /help command for more info on a command.
+You can also type /help category for more info on a category.
+```
 
 ## Usage
 
