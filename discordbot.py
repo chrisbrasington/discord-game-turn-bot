@@ -14,7 +14,7 @@ test = False
 # track game state
 index = 0
 
-alarm_interval = 3600
+alarm_interval = 3600*2
 
 game_active = False
 
@@ -217,6 +217,21 @@ async def end(ctx):
         return
     await end_game(ctx)
 
+@bot.command()
+async def alarm(ctx, new_alarm: str):
+    number = int(new_alarm)
+
+    if number > 4:
+        await ctx.channel.send("Yeah let's not go bigger than 4 hours. You can send 0 to disable")
+        return
+
+    if number == 0:
+        await ctx.channel.send("Disabling alarm")
+    else:
+        await ctx.channel.send(f"Setting alarm to {number} hour(s)")
+
+    alarm_interval = 3600*number
+
 # command print, status
 @bot.command(name="print", aliases=["status", "who"])
 async def print_game(ctx):
@@ -231,17 +246,18 @@ async def print_game(ctx):
         await ctx.channel.send(output)
         return
 
-    SECONDS_PER_HOUR = 3600*2
+    SECONDS_PER_HOUR = 3600
 
-    # set alarm reminder for active player
-    interval_text = format(alarm_interval/SECONDS_PER_HOUR, ".0f")
-    alarm_text = f"setting alarm to {interval_text} hour."
-    print(alarm_text)
-    signal.signal(signal.SIGALRM, lambda signum, frame: 
-        # await alarm(ctx)
-        asyncio.create_task(message_alarm(ctx, signal))
-    )
-    signal.alarm(alarm_interval)
+    if alarm_interval > 0:
+        # set alarm reminder for active player
+        interval_text = format(alarm_interval/SECONDS_PER_HOUR, ".0f")
+        alarm_text = f"setting alarm to {interval_text} hour."
+        print(alarm_text)
+        signal.signal(signal.SIGALRM, lambda signum, frame: 
+            # await alarm(ctx)
+            asyncio.create_task(message_alarm(ctx, signal))
+        )
+        signal.alarm(alarm_interval)
 
     global index
 
