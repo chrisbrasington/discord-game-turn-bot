@@ -319,7 +319,7 @@ async def get_simple():
         if '@' in name:
             id = int(name.replace("<", "").replace("@", "").replace(">", ""))
             user = await bot.fetch_user(id)
-            output_list.append(user)
+            output_list.append(f'{user.name}#{user.discriminator}')
         else:
             output_list.append(name)
     
