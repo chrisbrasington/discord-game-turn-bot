@@ -11,7 +11,7 @@ The game progresses as follows:
 2. The game is started using the `/begin`, `/go`, `/start`, `/random`, or `/randomize` command, which shuffles the player list and prints the first player.
 
 ```
-ai-telephone-game-bot
+@ai-telephone-game-bot
 BOT
  — Today at 1:23 AM
 New Game begin! - setting alarm to 2 hour(s)
@@ -27,7 +27,7 @@ Grawgith it's your turn!
 3. The current player can be skipped to the next player in the list using the `/next` or `/skip` command. If the current player is the last player in the list, a message is sent indicating that the game has ended. Additionally, if the active player posts an image in a channel that the bot is listening to, the game will automatically progress to the next player.
 
 ```
-Christopher (yoetrian) — Today at 1:23 AM
+@Christopher (yoetrian) — Today at 1:23 AM
 /next
 ai-telephone-game-bot
 BOT
@@ -41,7 +41,7 @@ BOT
 ```
 
 ```
-Christopher (yoetrian) — Today at 1:23 AM
+@Christopher (yoetrian) — Today at 1:23 AM
 ![](nia.jpg)
 ai-telephone-game-bot
 BOT
@@ -57,9 +57,9 @@ Grubblin it's your turn!
 4. The game can be ended at any time using the `/end` command, which displays the final player.
 
 ```
-Christopher (yoetrian) — Today at 1:24 AM
+@Christopher (yoetrian) — Today at 1:24 AM
 /end
-ai-telephone-game-bot
+@ai-telephone-game-bot
 BOT
  — Today at 1:24 AM
 Game over! Congratulations Grubblin! Start new with /begin
