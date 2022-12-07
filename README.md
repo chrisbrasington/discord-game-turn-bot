@@ -94,6 +94,8 @@ This is a Discord bot written in Python. It uses the `discord.py` library to int
 - `/end` - ends the game and displays the final player
 - `/config` - shows game configuration
 - `/alarm #` - sets alarm interval
+- `/goblinmode` or `/testmode` - swaps players for test players
+- `/restart` - swaps to players and resets
 
 ## Usage
 
