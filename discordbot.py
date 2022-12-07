@@ -39,7 +39,7 @@ async def init():
     print(await state.Serialize())
 
 # command hello
-@bot.command(description="Display simple hello")
+@bot.command(brief="Hello, World")
 async def hello(ctx):
     await ctx.send("Hello, world!")
 
@@ -48,7 +48,7 @@ def is_listening(ctx):
     return str(ctx.channel) == state.channel
 
 # command listen - sets game channel
-@bot.command()
+@bot.command(brief="Set listening to this channel")
 async def listen(ctx):
     global state
     state.channel = str(ctx.channel)
@@ -57,7 +57,7 @@ async def listen(ctx):
     await state.Save()
 
 # command add player
-@bot.command(description="Adds player to game")
+@bot.command(brief="Adds player to game. If game is active, goes to end of list")
 async def add(ctx, names: str):
     global bot, state 
     if(not is_listening(ctx)):
@@ -70,7 +70,7 @@ async def add(ctx, names: str):
         await ctx.channel.send(f"{name} already exists")
 
 # command removes a player from the game
-@bot.command()
+@bot.command(brief="Removes player from game")
 async def remove(ctx, name: str):
     global state
     if(not is_listening(ctx)):
@@ -83,13 +83,13 @@ async def remove(ctx, name: str):
         await ctx.channel.send(f"{name} not found")
 
 # command being
-@bot.command(aliases=["go", "start", "random", "randomize"])
+@bot.command(brief="Shuffles and starts new game",aliases=["go", "start", "random", "randomize"])
 async def begin(ctx):
     global state
     await state.Begin(ctx, bot)
 
 # command next/skip
-@bot.command(aliases=["skip"])
+@bot.command(brief="Progress to next player",aliases=["skip"])
 async def next(ctx):
     if(not is_listening(ctx)):
         return
@@ -97,14 +97,14 @@ async def next(ctx):
     await state.Next(ctx, bot)
 
 # command end
-@bot.command()
+@bot.command(brief="End game")
 async def end(ctx):
     if(not is_listening(ctx)):
         return
     await end_game(ctx)
 
 # set alarm
-@bot.command()
+@bot.command(brief="Set player alarm in hours")
 async def alarm(ctx, new_alarm: str):
     global state
     number = int(new_alarm)
@@ -124,7 +124,7 @@ async def alarm(ctx, new_alarm: str):
             await ctx.channel.send(f"Congrats {ctx.author.mention}, you hit an edge case of changing the alarm mid-game. I will not start a new alarm until the next player in the game..")
 
 # command print, status
-@bot.command(name="print", aliases=["status", "who"])
+@bot.command(brief="Prints current game status",name="print", aliases=["status", "who"])
 async def print_game(ctx):
     global state
     await state.Display(ctx)
@@ -135,13 +135,13 @@ async def end_game(ctx):
     await state.End(ctx)
 
 # command test
-@bot.command()
+@bot.command(brief="Shows configuration of bot")
 async def config(ctx):
     global state
     await state.DisplayConfig(ctx, bot)
 
 # command test - sets players to test players
-@bot.command(name="gametest", aliases=["testmode", "goblinmode"])
+@bot.command(brief="aka /goblinmode - swaps players for test goblins",name="gametest", aliases=["testmode", "goblinmode"])
 async def gametest(ctx):
     global state
     await state.TestMode(True, bot)
@@ -149,7 +149,7 @@ async def gametest(ctx):
     await state.DisplayConfig(ctx, bot)
 
 # command restart - can unload test to real players
-@bot.command()
+@bot.command(brief="Resets players (used for swapping out of test mode")
 async def restart (ctx):
     global state
     await state.Restart(bot)
@@ -157,7 +157,7 @@ async def restart (ctx):
     await ctx.channel.send("Restarted")
     await state.DisplayConfig(ctx, bot)
 
-@bot.command()
+@bot.command(brief="Toggles if @ messaging is used during turns")
 async def silent(ctx):
     global state
     state.silent = not state.silent
