@@ -251,14 +251,16 @@ async def print_game(ctx):
     global game_active
     global alarm_interval
 
+    SECONDS_PER_HOUR = 3600
+
+    alarm_text = "no alarm"
+
     # do not advance to new game here
     if not game_active:
         output = "Game is not active. Start with /begin"
         print(output)
         await ctx.channel.send(output)
         return
-
-    SECONDS_PER_HOUR = 3600
 
     if alarm_interval > 0:
         # set alarm reminder for active player
