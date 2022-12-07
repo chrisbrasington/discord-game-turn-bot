@@ -26,6 +26,7 @@ bot = commands.Bot(
 
 # initialize players file read
 def init():
+    global game_active
     global game_channel
     global name_list
     global index
