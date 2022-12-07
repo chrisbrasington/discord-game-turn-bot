@@ -5,7 +5,9 @@ import time as regular_time
 
 # record all players to file
 player_file = "players.json"
+channel_file = "channel.txt"
 name_list = None
+game_channel = None
 
 # track game state
 index = 0
@@ -22,7 +24,7 @@ bot = commands.Bot(
 
 # initialize players file read
 def init():
-
+    global game_channel
     global name_list
     global index
     index = 0
@@ -37,6 +39,17 @@ def init():
         # Convert the JSON string to a list of strings
         name_list = json.loads(json_string)
 
+    if os.path.exists(channel_file):
+        # Open a file for reading 
+        with open(channel_file, 'r') as file:
+            # Read the contents of the file
+            game_channel = file.read()
+
+    if game_channel is None:
+        print("Not listening on any channel")
+    else:
+        print(f"Listening on {game_channel}")
+
     if name_list is None:
         name_list = []
 
@@ -44,8 +57,8 @@ def init():
     global game_list
     game_list = name_list.copy()
     random.shuffle(game_list)
-    print("Silent Ready")
     print(game_list)
+    print("Silent Ready")
 
 # save players to file
 async def save():
@@ -60,9 +73,17 @@ async def save():
 async def hello(ctx):
     await ctx.send("Hello, world!")
 
+def listening(ctx):
+    global game_channel
+    print("listening check")
+    print(str(ctx.channel) == game_channel)
+    return str(ctx.channel) == game_channel
+
 # command add player
 @bot.command(description="Adds player to game")
 async def add(ctx, names: str):
+    if(not listening(ctx)):
+        return
 
     print("add command:")
 
@@ -82,6 +103,9 @@ async def add(ctx, names: str):
 # command clear 
 @bot.command()
 async def clear(ctx):
+    if(not listening(ctx)):
+        return
+
     global index
     index = 0
     name_list.clear()
@@ -94,6 +118,9 @@ async def clear(ctx):
 # command removes a player from the game
 @bot.command()
 async def remove(ctx, name: str):
+    if(not listening(ctx)):
+        return
+
     global index
     found = False
     if name in name_list:
@@ -118,6 +145,8 @@ async def remove(ctx, name: str):
 # command being
 @bot.command(aliases=["go", "start", "random", "randomize"])
 async def begin(ctx):
+    if(not listening(ctx)):
+        return
     global index 
     index = 0
     global game_active
@@ -132,6 +161,8 @@ async def begin(ctx):
 # command next/skip
 @bot.command(aliases=["skip"])
 async def next(ctx):
+    if(not listening(ctx)):
+        return
     global game_active
     global index
     print(index)
@@ -177,12 +208,15 @@ def can_message_during_daytime():
 # command end
 @bot.command()
 async def end(ctx):
+    if(not listening(ctx)):
+        return
     await end_game(ctx)
 
 # command print, status
 @bot.command(name="print", aliases=["status", "who"])
 async def print_game(ctx):
-
+    if(not listening(ctx)):
+        return
     global game_active
 
     # do not advance to new game here
@@ -256,27 +290,44 @@ async def end_game(ctx):
 
 # command test
 @bot.command()
-async def test(ctx):
-    await ctx.channel.send("Test!")
+async def config(ctx):
+    # always listen
+    if game_channel is None:
+        await ctx.channel.send("Not listening on any channel")
+    else:    
+        await ctx.channel.send(f"Listening on {game_channel}")
+    
+    await print_simple(ctx)
+
+# command test
+@bot.command()
+async def listen(ctx):
+    # always listen
+    global game_channel
+    game_channel = str(ctx.channel)
+
+    with open('channel.txt', 'w') as file:
+        # Write the string to the file
+        file.write(game_channel)
+
+    print(f"/listen {game_channel}")
+    await ctx.channel.send(f"Now listening on {ctx.channel}")
 
 # bot on message to channel
 @bot.event
 async def on_message(message):
-    
+    # always listen
+    global game_channel
+
     if message.author == bot.user:
         return
-
-    print(message.channel)
-    image_responding_channel = False
-
-    if "bot" in str(message.channel) or "ai-telephone" in str(message.channel) :
-       print("correct channel")
-       image_responding_channel = True
+    
+    image_responding_channel = message.channel == game_channel
 
     # Use a regular expression to remove any Discord ID from message.content.
     message_text = re.sub(r"<@\d+>\s*", "", message.content)
     
-    print(f"{message.author.mention} sent {message_text}")
+    # print(f"{message.author.mention} sent {message_text}")
 
     # message inteded for bot
     if bot.user in message.mentions:
@@ -294,6 +345,8 @@ async def on_message(message):
             await message.channel.send("Fuck yeah {message.author.mention}")
         elif("why" in message_text):
             await message.channel.send("Sorry.. go ask chat.openai")
+        elif("config" in message_text):
+            await config(message)
         else:
             await message.channel.send(f"{message_text}, you too {message.author.mention}.")
     else:
