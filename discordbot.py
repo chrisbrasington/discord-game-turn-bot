@@ -401,6 +401,7 @@ async def on_message(message):
 
     if(message.channel.type == discord.ChannelType.private):
         await message.channel.send(f"Don't send me a direct message {message.author.mention}, ya weirdo.")
+        await message.channel.send("Play games with me in your discord channel, check out the readme at https://github.com/chrisbrasington/discord-game-turn-bot")
         print(f"{message.author.mention} send a dm, replying and ignoring")
         return
     
