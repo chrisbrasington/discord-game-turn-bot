@@ -76,8 +76,8 @@ async def hello(ctx):
 
 def listening(ctx):
     global game_channel
-    print("listening check")
-    print(str(ctx.channel) == game_channel)
+    # print("listening check")
+    # print(str(ctx.channel) == game_channel)
     return str(ctx.channel) == game_channel
 
 # command add player
@@ -95,7 +95,7 @@ async def add(ctx, names: str):
             else:
                 name_list.append(name.strip())
                 game_list.append(name.strip())
-    name_list.sort()
+    # name_list = name_list.sort()
 
     await save()
     await print_simple(ctx)
