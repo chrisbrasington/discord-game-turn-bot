@@ -278,7 +278,7 @@ class GameState:
 
     # restart will bring out of test mode and freshly load player list for game setup
     async def Restart(self, bot):
-        self.TestMode(False, bot)
+        await self.TestMode(False, bot)
 
     # save both players and gamestate to file
     async def Save(self):
@@ -313,8 +313,7 @@ class GameState:
         self.index = 0
         print(f'TEST MODE: {is_test}')
         if self.is_test:
-            self.ReadPlayerFile(self.test_file)
-            
+            self.ReadPlayerFile(self.test_file)    
         else:
             self.ReadPlayerFile(self.player_file)
 
