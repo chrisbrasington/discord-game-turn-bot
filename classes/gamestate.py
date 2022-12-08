@@ -195,7 +195,10 @@ class GameState:
             for name in self.names:
                 await self.ReadUser(bot, name)
 
-        await ctx.channel.send(await self.PrintSimple())
+        await ctx.channel.send("Known players:")
+        await ctx.channel.send(await self.PrintSimple(False))
+        await ctx.channel.send("Game order:")
+        await ctx.channel.send(await self.PrintSimple(True))
 
     # end current game
     async def End(self, ctx):
@@ -222,14 +225,22 @@ class GameState:
                 await self.Begin(ctx, bot) 
 
     # print simple names known
-    async def PrintSimple(self):
+    async def PrintSimple(self, game = False):
         output_list = []
-        for name in self.names:
-            user = self.mapping[name]
-            if name == user:
-                output_list.append(name)
-            else:
-                output_list.append(f'{user.name}#{user.discriminator}')
+        if game:
+            for name in self.names:
+                user = self.mapping[name]
+                if name == user:
+                    output_list.append(name)
+                else:
+                    output_list.append(f'{user.name}#{user.discriminator}')
+        else:
+            for name in self.players:
+                user = self.mapping[name]
+                if name == user:
+                    game_list.append(name)
+                else:
+                    game_list.append(f'{user.name}#{user.discriminator}')
         print(output_list)
         return output_list
 
