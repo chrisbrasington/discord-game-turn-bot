@@ -12,12 +12,13 @@ class GameState:
     # read players from file if exists
     # reading game state from file should be done by deserization
     # at constructor of GameState object outside of this class
-    def __init__(self, active=False, alarm_hours=2, channel='🤖bot-commands', index=0, is_test=False, names=[], players=[], silent = False):
+    def __init__(self, active=False, alarm_hours=2, channel='🤖bot-commands', index=0, 
+        is_test=False, names=[], players=[], silent = False):
+
         self.active = active
         self.is_alarm_active = False
         self.silent = silent
         self.silent = True
-
         self.names = names
         self.players = players
         self.mapping = {} # not serializable, will recreate
@@ -25,7 +26,7 @@ class GameState:
         self.is_test = is_test
         self.index = index
         self.channel = channel 
-        self.ReadPlayerFile(self.player_file)
+        self.ReadPlayerFile(self.player_file, False)
 
     # add player to names and game
     async def Add(self, bot, new_name: str):
@@ -77,9 +78,7 @@ class GameState:
         self.index = 0
 
         print('Starting game...')
-        self.players = self.names.copy()
-        random.shuffle(self.players)
-        print(f'shuffled: {self.players}')
+        await self.Shuffle()
         self.active = True
         await self.Display(ctx)
         await self.Save()
@@ -235,9 +234,9 @@ class GameState:
         return output_list
 
     # read game state from file if exists
-    def ReadPlayerFile(self, file):
-        self.names = []
-        self.players = []
+    # only copy players if not loading prior game state from disk
+    # such as a restart or test-mode commands
+    def ReadPlayerFile(self, file, copy_players = True):
         print(f'Reading Players File: {file}')
         # read from file
         if os.path.exists(file):
@@ -250,7 +249,9 @@ class GameState:
 
             # Convert the JSON string to a list of strings
             self.names = json.loads(json_string)
-            self.players = self.names.copy()
+
+            if copy_players:
+                self.players = self.names.copy()
 
     # read all names (discord IDs) as discord usernames
     # slow, so done once and cached
@@ -311,7 +312,8 @@ class GameState:
     async def Shuffle(self):
         self.players = self.names.copy()
         random.shuffle(self.players)
-        print(f'Shuffled: {self.players}')
+        print('Shuffling...')
+        await self.Save()
 
     # test mode / goblin mode (word of the year 2022) - swaps players for goblin names useful for testing
     async def TestMode(self, is_test: bool, bot):
