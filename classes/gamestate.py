@@ -8,6 +8,10 @@ class GameState:
     channel = None
     SECONDS_PER_HOUR = 3600
 
+    # initialize game state with default values
+    # read players from file if exists
+    # reading game state from file should be done by deserization
+    # at constructor of GameState object outside of this class
     def __init__(self, active=False, alarm_hours=2, channel='🤖bot-commands', index=0, is_test=False, names=[], players=[], silent = False):
         self.active = active
         self.is_alarm_active = False
@@ -16,124 +20,14 @@ class GameState:
 
         self.names = names
         self.players = players
-        self.mapping = {} # not serialize
+        self.mapping = {} # not serializable, will recreate
         self.alarm_hours = alarm_hours
         self.is_test = is_test
         self.index = index
         self.channel = channel 
-        self.Read(self.player_file)
+        self.ReadPlayerFile(self.player_file)
 
-    def Read(self, file):
-        self.names = []
-        self.players = []
-        print(f'Reading Players File: {file}')
-        # read from file
-        if os.path.exists(file):
-        # Open the file in read mode
-            with open(file, 'r') as f:
-                # Read the JSON string from the file
-                json_string = f.read()
-
-            print(json_string)
-
-            # Convert the JSON string to a list of strings
-            self.names = json.loads(json_string)
-            self.players = self.names.copy()
-    
-    async def Restart(self, bot):
-        self.TestMode(False, bot)
-
-    async def TestMode(self, is_test: bool, bot):
-        self.names = []
-        self.players = []
-        self.is_test = is_test
-        print(f'TEST MODE: {is_test}')
-        if self.is_test:
-            self.ReadTestPlayers()
-        else:
-            self.ReadPlayers()
-
-        await state.ReadAllUsers(bot)
-
-    async def DisplayConfig(self, ctx, bot):
-
-        print(await self.Serialize())
-
-        if self.channel is None:
-            output = 'Not listening to any channel'
-        else:
-            output = f'Listening on {self.channel}'
-        if self.is_test:
-            output += '\nTEST MODE ON'
-        if self.active:
-            output += '\nGame is active'
-        else:
-            output += '\nGame is not active'
-        if self.silent:
-            output += '\nGame is silent (no @ s)'
-        output += f'\nIndex is {self.index}'
-        if self.alarm_hours != 0:
-            output += f'\nAlarm is set to  {self.alarm_hours}'
-        else:
-            output += '\nAlarm is disabled'
-
-        await ctx.channel.send(output)
-
-        if self.mapping == {}:
-            await ctx.channel.send('Reading usernames first time... one moment please...')
-            for name in self.names:
-                await self.ReadUser(bot, name)
-
-        await ctx.channel.send(await self.PrintSimple())
-
-    async def PrintSimple(self):
-        output_list = []
-        for name in self.names:
-            user = self.mapping[name]
-            if name == user:
-                output_list.append(name)
-            else:
-                output_list.append(f'{user.name}#{user.discriminator}')
-        print(output_list)
-        return output_list
-
-    async def ReadAllUsers(self, bot):
-        for name in self.names:
-            await self.ReadUser(bot, name)
-
-    async def ReadUser(self, bot, name: str):
-        if '@' in name:
-            id = int(name.replace('<', '').replace('@', '').replace('>', ''))
-            user = await bot.fetch_user(id)
-            self.mapping[name] = user
-        else:
-            self.mapping[name] = name
-
-        print(f"read: {self.mapping[name]}")
-        return self.mapping[name]
-
-    async def Shuffle(self):
-        self.players = self.names.copy()
-        random.shuffle(self.players)
-        print(f'Shuffled: {self.players}')
-
-    async def Save(self):
-        if self.is_test:
-            print('Save, skipping in test mode')
-            return
-        print('Saving...')
-
-        with open(self.player_file, "w") as f:
-            # Write the JSON string to the file      
-            f.write(json.dumps(self.names))
-        
-        with open(self.game_state_file, "w") as f:
-            # Write the JSON string to the file      
-            f.write(json.dumps(self, cls=GameStateEncoder, indent=4, sort_keys=True))
-
-    async def Serialize(self):
-        return json.dumps(self, cls=GameStateEncoder, indent=4, sort_keys=True)
-
+    # add player to names and game
     async def Add(self, bot, new_name: str):
         print("add command:")
 
@@ -152,19 +46,30 @@ class GameState:
                     await self.Save()
                     return True
 
-    async def Remove(self, name: str):
-        print(f'Removing {name}')
-        removed = False
-        if name in self.names:
-            self.names.remove(name)
-            removed = True
-        if name in self.players:
-            self.players.remove(name)
-            removed = True
-        
-        await self.Save()
-        return removed
+    # alert alarm and continue alarm
+    async def AlarmAlert(self, ctx, signal):
+        print('Alarm sounding!')
+        if self.CanMessageDuringDaytime():
+            if self.alarm_hours > 0:
+                if self.active:
+                    output = f"{self.players[self.index]} this is your alarm - it is your turn"  
+                    print(output)
+                    output += "\n\n"
+                    await ctx.channel.send(output)
+                else:
+                    print("game inactive - ending alarm")
+        else:
+                print("Ignoring alarm, continuing...")
 
+        if self.active and self.alarm_hours > 0:
+            print('Restarting alarm...')
+            signal.signal(signal.SIGALRM, lambda signum, frame: 
+                asyncio.create_task(self.AlarmAlert(ctx, signal))
+            )
+            print(f'resetting - alarming in {self.alarm_hours} hour(s)')
+            signal.alarm(self.alarm_hours*self.SECONDS_PER_HOUR)
+
+    # begin game by shuffling players and setting index to 0 and active state to True
     async def Begin(self, ctx, bot):
         # safer
         if self.mapping == {}:
@@ -179,13 +84,16 @@ class GameState:
         await self.Display(ctx)
         await self.Save()
 
-    async def End(self, ctx):
-        self.active = False
-        print('Ending game...')
-        await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}! Start new with /begin")
-        self.index = 0
-        await self.Save()
+    # can message during day - checks if alarm alert should occur or not
+    def CanMessageDuringDaytime(self):
+        start_time = time(hour=10, minute=0)  # Create a time object for 10:00 AM.
+        end_time = time(hour=22, minute=0)  # Create a time object for 10:00 PM.
 
+        current_time = datetime.now().time()  # Get the current time as a time object.
+
+        return start_time < current_time < end_time  
+
+    # display overall state of game
     async def Display(self, ctx):
         print('Printing game...')
         # do not advance to new game here
@@ -253,6 +161,47 @@ class GameState:
 
         await ctx.channel.send(output)
 
+    # display configuration of active game state
+    async def DisplayConfig(self, ctx, bot):
+
+        print(await self.Serialize())
+
+        if self.channel is None:
+            output = 'Not listening to any channel'
+        else:
+            output = f'Listening on {self.channel}'
+        if self.is_test:
+            output += '\nTEST MODE ON'
+        if self.active:
+            output += '\nGame is active'
+        else:
+            output += '\nGame is not active'
+        if self.silent:
+            output += '\nGame is silent (no @ s)'
+        output += f'\nIndex is {self.index}'
+        if self.alarm_hours != 0:
+            output += f'\nAlarm is set to  {self.alarm_hours}'
+        else:
+            output += '\nAlarm is disabled'
+
+        await ctx.channel.send(output)
+
+        if self.mapping == {}:
+            await ctx.channel.send('Reading usernames first time... one moment please...')
+            for name in self.names:
+                await self.ReadUser(bot, name)
+
+        await ctx.channel.send(await self.PrintSimple())
+
+    # end current game
+    async def End(self, ctx):
+        self.active = False
+        print('Ending game...')
+        await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}! Start new with /begin")
+        self.index = 0
+        await self.Save()
+
+    # next will manually progress game to next player, may result in end of game
     async def Next(self, ctx, bot):
         self.is_alarm_active = False
         if(self.index != len(self.players)-1):
@@ -264,37 +213,112 @@ class GameState:
                 await self.End(ctx)
             else:
                 await self.Begin(ctx, bot) 
-  
-    async def AlarmAlert(self, ctx, signal):
-        print('Alarm sounding!')
-        if self.CanMessageDuringDaytime():
-            if self.alarm_hours > 0:
-                if self.active:
-                    output = f"{self.players[self.index]} this is your alarm - it is your turn"  
-                    print(output)
-                    output += "\n\n"
-                    await ctx.channel.send(output)
-                else:
-                    print("game inactive - ending alarm")
+
+    # print simple names known
+    async def PrintSimple(self):
+        output_list = []
+        for name in self.names:
+            user = self.mapping[name]
+            if name == user:
+                output_list.append(name)
+            else:
+                output_list.append(f'{user.name}#{user.discriminator}')
+        print(output_list)
+        return output_list
+
+    # read game state from file if exists
+    def ReadPlayerFile(self, file):
+        self.names = []
+        self.players = []
+        print(f'Reading Players File: {file}')
+        # read from file
+        if os.path.exists(file):
+        # Open the file in read mode
+            with open(file, 'r') as f:
+                # Read the JSON string from the file
+                json_string = f.read()
+
+            print(json_string)
+
+            # Convert the JSON string to a list of strings
+            self.names = json.loads(json_string)
+            self.players = self.names.copy()
+
+    # read all names (discord IDs) as discord usernames
+    # slow, so done once and cached
+    async def ReadAllUsers(self, bot):
+        for name in self.names:
+            await self.ReadUser(bot, name)
+
+    # read individual name (discord ID) as discord username
+    async def ReadUser(self, bot, name: str):
+        if '@' in name:
+            id = int(name.replace('<', '').replace('@', '').replace('>', ''))
+            user = await bot.fetch_user(id)
+            self.mapping[name] = user
         else:
-                print("Ignoring alarm, continuing...")
+            self.mapping[name] = name
 
-        if self.active and self.alarm_hours > 0:
-            print('Restarting alarm...')
-            signal.signal(signal.SIGALRM, lambda signum, frame: 
-                asyncio.create_task(self.AlarmAlert(ctx, signal))
-            )
-            print(f'resetting - alarming in {self.alarm_hours} hour(s)')
-            signal.alarm(self.alarm_hours*self.SECONDS_PER_HOUR)
+        print(f"read: {self.mapping[name]}")
+        return self.mapping[name]
 
-    def CanMessageDuringDaytime(self):
-        start_time = time(hour=10, minute=0)  # Create a time object for 10:00 AM.
-        end_time = time(hour=22, minute=0)  # Create a time object for 10:00 PM.
+    # remove player from names and game list
+    async def Remove(self, name: str):
+        print(f'Removing {name}')
+        removed = False
+        if name in self.names:
+            self.names.remove(name)
+            removed = True
+        if name in self.players:
+            self.players.remove(name)
+            removed = True
+        
+        await self.Save()
+        return removed
 
-        current_time = datetime.now().time()  # Get the current time as a time object.
+    # restart will bring out of test mode and freshly load player list for game setup
+    async def Restart(self, bot):
+        self.TestMode(False, bot)
 
-        return start_time < current_time < end_time    
+    # save both players and gamestate to file
+    async def Save(self):
+        if self.is_test:
+            print('Save, skipping in test mode')
+            return
+        print('Saving...')
 
+        with open(self.player_file, "w") as f:
+            # Write the JSON string to the file      
+            f.write(json.dumps(self.names))
+        
+        with open(self.game_state_file, "w") as f:
+            # Write the JSON string to the file      
+            f.write(json.dumps(self, cls=GameStateEncoder, indent=4, sort_keys=True))
+
+    # serialize game state
+    async def Serialize(self):
+        return json.dumps(self, cls=GameStateEncoder, indent=4, sort_keys=True)
+
+    # shuffle game list generaed from known names list. mapping used in display
+    async def Shuffle(self):
+        self.players = self.names.copy()
+        random.shuffle(self.players)
+        print(f'Shuffled: {self.players}')
+
+    # test mode / goblin mode (word of the year 2022) - swaps players for goblin names useful for testing
+    async def TestMode(self, is_test: bool, bot):
+        self.names = []
+        self.players = []
+        self.is_test = is_test
+        print(f'TEST MODE: {is_test}')
+        if self.is_test:
+            self.ReadTestPlayers()
+        else:
+            self.ReadPlayers()
+
+        await state.ReadAllUsers(bot)
+
+# game state encorder used to save to file
 class GameStateEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, GameState):
@@ -316,31 +340,3 @@ class GameStateEncoder(json.JSONEncoder):
         # This is important: call the superclass method to raise an exception
         # for unsupported types
         return super().default(obj)
-
-# class GameStateDecoder(json.JSONDecoder):
-#     def decode(self, json_str):
-#         # Parse the JSON string into a dictionary
-#         print()
-#         print()
-#         print(json_str)
-#         print()
-#         print()
-#         data = json.loads(json_str)
-#         print()
-#         print()
-#         print(data)
-#         print('~~~~~~~~~~')
-
-#         # Extract the values from the dictionary and use them to
-#         # initialize a new GameState object
-#         names = data['names']
-#         players = data['players']
-#         alarm_hours = data['alarm_hours']
-#         channel = data['channel']
-#         is_test = data['is_test']
-#         index = data['index']
-#         obj.active = data['active']
-#         obj.silent = data['silent']
-#         game_state = GameState(names, players, alarm_hours, channel, is_test, index)
-
-#         return game_state

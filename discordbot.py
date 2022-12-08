@@ -14,6 +14,11 @@ bot = commands.Bot(
     case_insensitive=True, 
     intents=discord.Intents.all())
 
+# check if context is the listening channel
+def is_listening(ctx):
+    global state
+    return str(ctx.channel) == state.channel
+
 # initialize players file read
 async def init():
     global bot, state
@@ -31,30 +36,7 @@ async def init():
         print("Not is_listening on any channel")
     else:
         print(f"is_listening on {state.channel}")
-
-    # shuffle game list (silent begin)
-    # await state.Shuffle()
-    # print("Silent Ready")
-
     print(await state.Serialize())
-
-# command hello
-@bot.command(brief="Hello, World")
-async def hello(ctx):
-    await ctx.send("Hello, world!")
-
-def is_listening(ctx):
-    global state
-    return str(ctx.channel) == state.channel
-
-# command listen - sets game channel
-@bot.command(brief="Set listening to this channel")
-async def listen(ctx):
-    global state
-    state.channel = str(ctx.channel)
-    print(f"/listen {state.channel}")
-    await ctx.channel.send(f"Now is_listening on {ctx.channel}")
-    await state.Save()
 
 # command add player
 @bot.command(brief="Adds player to game. If game is active, goes to end of list")
@@ -68,40 +50,6 @@ async def add(ctx, names: str):
         await state.DisplayConfig(ctx, bot)
     else:
         await ctx.channel.send(f"{name} already exists")
-
-# command removes a player from the game
-@bot.command(brief="Removes player from game")
-async def remove(ctx, name: str):
-    global state
-    if(not is_listening(ctx)):
-        return
-
-    if await state.Remove(name):
-        await ctx.channel.send(f"Removed {name}")
-        await state.DisplayConfig(ctx, bot)
-    else:
-        await ctx.channel.send(f"{name} not found")
-
-# command being
-@bot.command(brief="Shuffles and starts new game",aliases=["go", "start", "random", "randomize"])
-async def begin(ctx):
-    global state
-    await state.Begin(ctx, bot)
-
-# command next/skip
-@bot.command(brief="Optionally progress to next player.",aliases=["skip"])
-async def next(ctx):
-    if(not is_listening(ctx)):
-        return
-    global state
-    await state.Next(ctx, bot)
-
-# command end
-@bot.command(brief="End game")
-async def end(ctx):
-    if(not is_listening(ctx)):
-        return
-    await end_game(ctx)
 
 # set alarm
 @bot.command(brief="Set player alarm in hours")
@@ -123,22 +71,26 @@ async def alarm(ctx, new_alarm: str):
         if state.active: 
             await ctx.channel.send(f"Congrats {ctx.author.mention}, you hit an edge case of changing the alarm mid-game. I will not start a new alarm until the next player in the game..")
 
-# command print, status
-@bot.command(brief="Prints current game status",name="print", aliases=["status", "who"])
-async def print_game(ctx):
+# command being
+@bot.command(brief="Shuffles and starts new game",aliases=["go", "start", "random", "randomize"])
+async def begin(ctx):
     global state
-    await state.Display(ctx)
- 
-# end game without starting again
-async def end_game(ctx):
-    global state
-    await state.End(ctx)
+    await state.Begin(ctx, bot)
 
 # command test
 @bot.command(brief="Shows configuration of bot")
 async def config(ctx):
     global state
     await state.DisplayConfig(ctx, bot)
+
+# command end
+@bot.command(brief="End game")
+async def end(ctx):
+    if(not is_listening(ctx)):
+        return
+    global state
+    await state.End(ctx)
+    await end_game(ctx)
 
 # command test - sets players to test players
 @bot.command(brief="aka /goblinmode - swaps players for test goblins",name="gametest", aliases=["testmode", "goblinmode"])
@@ -148,23 +100,29 @@ async def gametest(ctx):
     await state.ReadAllUsers(bot)
     await state.DisplayConfig(ctx, bot)
 
-# command restart - can unload test to real players
-@bot.command(brief="Resets players (used for swapping out of test mode)")
-async def restart (ctx):
-    global state
-    await state.Restart(bot)
+# command hello
+@bot.command(brief="Hello, World")
+async def hello(ctx):
+    await ctx.send("Hello, world!")
 
-    await ctx.channel.send("Restarted")
-    await state.DisplayConfig(ctx, bot)
-
-@bot.command(brief="Toggles if @ messaging is used during turns")
-async def silent(ctx):
+# command listen - sets game channel
+@bot.command(brief="Set listening to this channel")
+async def listen(ctx):
     global state
-    state.silent = not state.silent
-    await ctx.channel.send(f"Silent: {state.silent}")
+    state.channel = str(ctx.channel)
+    print(f"/listen {state.channel}")
+    await ctx.channel.send(f"Now is_listening on {ctx.channel}")
     await state.Save()
 
-# bot on message to channel
+# command next/skip
+@bot.command(brief="Optionally progress to next player.",aliases=["skip"])
+async def next(ctx):
+    if(not is_listening(ctx)):
+        return
+    global state
+    await state.Next(ctx, bot)
+
+# on message sent to channel
 @bot.event
 async def on_message(ctx):
     global state
@@ -244,6 +202,42 @@ async def on_message(ctx):
         print(f"{ctx.author} sent {message_text}")
         await bot.process_commands(ctx)
 
+# command print, status
+@bot.command(brief="Prints current game status",name="print", aliases=["status", "who"])
+async def print_game(ctx):
+    global state
+    await state.Display(ctx)
+
+# command removes a player from the game
+@bot.command(brief="Removes player from game")
+async def remove(ctx, name: str):
+    global state
+    if(not is_listening(ctx)):
+        return
+
+    if await state.Remove(name):
+        await ctx.channel.send(f"Removed {name}")
+        await state.DisplayConfig(ctx, bot)
+    else:
+        await ctx.channel.send(f"{name} not found")
+
+# command restart - can unload test to real players
+@bot.command(brief="Resets players (used for swapping out of test mode)")
+async def restart (ctx):
+    global state
+    await state.Restart(bot)
+
+    await ctx.channel.send("Restarted")
+    await state.DisplayConfig(ctx, bot)
+
+# command silent - toggle @ curring player
+@bot.command(brief="Toggles if @ messaging is used during turns")
+async def silent(ctx):
+    global state
+    state.silent = not state.silent
+    await ctx.channel.send(f"Silent: {state.silent}")
+    await state.Save()
+
 # Open the file in read-only mode.
 with open("bot_token.txt", "r") as f:
 
@@ -254,4 +248,3 @@ with open("bot_token.txt", "r") as f:
 
     # bot.run(bot_token)
     bot.run(bot_token)
-
