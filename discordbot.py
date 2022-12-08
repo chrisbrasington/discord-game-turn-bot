@@ -38,6 +38,14 @@ async def init():
         print(f"is_listening on {state.channel}")
     print(await state.Serialize())
 
+# on bot ready, read usernames
+@bot.event
+async def on_ready():
+    global bot, state
+    print('Ready')
+    print('Reading usernames...')
+    await state.ReadAllUsers(bot)
+
 # command add player
 @bot.command(brief="Adds player to game. If game is active, goes to end of list")
 async def add(ctx, names: str):
@@ -253,5 +261,4 @@ with open("bot_token.txt", "r") as f:
     # Read the contents of the file.
     bot_token = f.read().strip()
 
-    # bot.run(bot_token)
     bot.run(bot_token)
