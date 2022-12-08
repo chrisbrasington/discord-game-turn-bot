@@ -42,9 +42,9 @@ async def init():
 @bot.event
 async def on_ready():
     global bot, state
-    print('Ready')
     print('Reading usernames...')
     await state.ReadAllUsers(bot)
+    print('Ready')
 
 # command add player
 @bot.command(brief="Adds player to game. If game is active, goes to end of list")
