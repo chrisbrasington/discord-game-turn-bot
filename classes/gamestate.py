@@ -238,9 +238,9 @@ class GameState:
             for name in self.players:
                 user = self.mapping[name]
                 if name == user:
-                    game_list.append(name)
+                    output_list.append(name)
                 else:
-                    game_list.append(f'{user.name}#{user.discriminator}')
+                    output_list.append(f'{user.name}#{user.discriminator}')
         print(output_list)
         return output_list
 
