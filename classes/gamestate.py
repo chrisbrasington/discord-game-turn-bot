@@ -1,4 +1,4 @@
-import asyncio, json, os, random, signal
+import asyncio, discord, json, os, random, signal
 from datetime import datetime, time
 
 class GameState:
@@ -159,7 +159,12 @@ class GameState:
 
         print(output)
 
-        await ctx.channel.send(output)
+        message = discord.Embed(
+            # title= 'Image generator',
+            description='[Generate games images at craiyon - click me](<https://www.craiyon.com/>)\n\n'
+        )
+
+        await ctx.channel.send(output, embed=message)
 
     # display configuration of active game state
     async def DisplayConfig(self, ctx, bot):
