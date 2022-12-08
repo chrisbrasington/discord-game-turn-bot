@@ -187,7 +187,7 @@ class GameState:
         await ctx.channel.send(output)
 
         if self.mapping == {}:
-            await ctx.channel.send('Reading usernames first time... one moment please...')
+            await ctx.channel.send('Reading usernames into cache... one moment please...')
             for name in self.names:
                 await self.ReadUser(bot, name)
 
@@ -310,13 +310,15 @@ class GameState:
         self.names = []
         self.players = []
         self.is_test = is_test
+        self.index = 0
         print(f'TEST MODE: {is_test}')
         if self.is_test:
-            self.ReadTestPlayers()
+            self.ReadPlayerFile(self.test_file)
+            
         else:
-            self.ReadPlayers()
+            self.ReadPlayerFile(self.player_file)
 
-        await state.ReadAllUsers(bot)
+        await self.ReadAllUsers(bot)
 
 # game state encorder used to save to file
 class GameStateEncoder(json.JSONEncoder):
