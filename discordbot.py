@@ -45,11 +45,15 @@ async def add(ctx, names: str):
     if(not is_listening(ctx)):
         return
 
-    if await state.Add(bot, names):
-        await ctx.channel.send("Added Player")
-        await state.DisplayConfig(ctx, bot)
+    name_check = names.replace('<','').replace('>','').replace('@','')
+    if name_check == str(bot.user.id):
+        await ctx.channel.send("No thanks, I run the game. I'm not smart enough to play it... yet.\n\nAlso what's with you and testing edge-cases?")
     else:
-        await ctx.channel.send(f"{name} already exists")
+        if await state.Add(bot, names):
+            await ctx.channel.send("Added Player")
+            await state.DisplayConfig(ctx, bot)
+        else:
+            await ctx.channel.send(f"{name} already exists")
 
 # set alarm
 @bot.command(brief="Set player alarm in hours")
@@ -158,21 +162,23 @@ async def on_message(ctx):
 
     # bot was mentioned
     if bot.user in ctx.mentions:
-        # respond to hello
-        if ("hello" in message_text or "hi" in message_text):
-            # Construct the response ctx.
-            response = f"Hello {ctx.author.mention}! How are you doing?"
-            await ctx.channel.send(response)
-        elif("thank" in message_text):
-            await ctx.channel.send(f"You're welcome {ctx.author.mention}.")
-        elif("right" in message_text):
-            await ctx.channel.send(f"Fuck yeah {ctx.author.mention}")
-        elif("why" in message_text or "what" in message_text):
-            await ctx.channel.send("Sorry.. go ask chat.openai")
-        elif("config" in message_text):
-            await state.DisplayConfig(ctx, bot)
-        else:
-            await ctx.channel.send(f"{message_text}, you too {ctx.author.mention}.")
+        # ignore commands
+        if not message_text.startswith('/'):
+            # respond to hello
+            if ("hello" in message_text or "hi" in message_text):
+                # Construct the response ctx.
+                response = f"Hello {ctx.author.mention}! How are you doing?"
+                await ctx.channel.send(response)
+            elif("thank" in message_text):
+                await ctx.channel.send(f"You're welcome {ctx.author.mention}.")
+            elif("right" in message_text):
+                await ctx.channel.send(f"Fuck yeah {ctx.author.mention}")
+            elif("why" in message_text or "what" in message_text):
+                await ctx.channel.send("Sorry.. go ask chat.openai")
+            elif("config" in message_text):
+                await state.DisplayConfig(ctx, bot)
+            else:
+                await ctx.channel.send(f"{message_text}, you too {ctx.author.mention}.")
 
     # if active player responding
     if len(state.players) > 0:
