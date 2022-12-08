@@ -70,8 +70,10 @@ Game over! Congratulations Grubblin! Start new with /begin
 
 ```
 Listening on 🤖bot-commands
-Alarm is set to 2.0 hours
-Game is not active.
+Game is not active
+Game is silent (no @ s)
+Index is 0
+Alarm is set to  2
 ['Grawgith', 'Gribble', 'Grubblin', '@Christopher (yoetrian)']
 ```
 
@@ -82,7 +84,9 @@ Changing the alarm mid-game will take effect with next player or after prior set
 
 ## Discord Bot
 
-This is a Discord bot written in Python. It uses the `discord.py` library to interact with the Discord API. The bot is initialized with the `commands.Bot` class, which allows it to respond to `/` commands.
+This is a Discord bot written in Python. It uses the `discord.py` library to interact with the Discord API. The bot is initialized with the `commands.Bot` class, which allows it to respond to `/` commands. 
+
+The bot also responds to certain direct messages and simple commands outside the listening channel of the game.
 
 ## Commands
 
