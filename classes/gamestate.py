@@ -130,11 +130,19 @@ class GameState:
             output = "New Game begin! - "
             output += f"{alarm_text}\n\n"
 
+        avatar = None
+
         # current turn
         if self.silent:
             output += 'New player turn!\n\n'
         else:
             output += f"{self.players[self.index]} it's your turn!\n\n"
+
+        if '@' in self.players[self.index]:
+            user = self.mapping[self.players[self.index]]
+            print(f'Current player:{user.name}')
+            avatar = user.avatar
+            print(avatar)
 
         # all players
         i = 0
@@ -160,13 +168,13 @@ class GameState:
         print(output)
 
         message = discord.Embed(
-            # title= 'Image generator',
-            description='[Generate games images at craiyon - click me](<https://www.craiyon.com/>)\n\n'
+            title= '',
+            description='[Generate image on craiyon](<https://www.craiyon.com/>)\n\n'
         )
+        # message.set_image(url=avatar)
+        message.set_thumbnail(url=avatar)
 
         await ctx.channel.send(output, embed=message)
-
-
 
     # display configuration of active game state
     async def DisplayConfig(self, ctx, bot):
