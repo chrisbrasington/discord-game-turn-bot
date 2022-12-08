@@ -90,7 +90,6 @@ async def end(ctx):
         return
     global state
     await state.End(ctx)
-    await end_game(ctx)
 
 # command test - sets players to test players
 @bot.command(brief="aka /goblinmode - swaps players for test goblins",name="gametest", aliases=["testmode", "goblinmode"])
