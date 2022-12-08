@@ -197,7 +197,10 @@ class GameState:
     async def End(self, ctx):
         self.active = False
         print('Ending game...')
-        await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}! Start new with /begin")
+        if self.silent:
+            await ctx.channel.send(f"Game over! Start new with /begin")
+        else:
+            await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}! Start new with /begin")
         self.index = 0
         await self.Save()
 
