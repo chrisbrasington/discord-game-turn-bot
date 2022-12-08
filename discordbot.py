@@ -46,6 +46,11 @@ async def on_ready():
     await state.ReadAllUsers(bot)
     print('Ready')
 
+    if(state.active):
+        await state.Status_Listening(bot, state.players[state.index])
+    else:
+        await state.Status_Watching(bot, "for /begin")
+
 # command add player
 @bot.command(brief="Adds player to game. If game is active, goes to end of list")
 async def add(ctx, names: str):
@@ -101,7 +106,7 @@ async def end(ctx):
     if(not is_listening(ctx)):
         return
     global state
-    await state.End(ctx)
+    await state.End(ctx, bot)
 
 # command test - sets players to test players
 @bot.command(brief="aka /goblinmode - swaps players for test goblins",name="gametest", aliases=["testmode", "goblinmode"])

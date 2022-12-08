@@ -82,6 +82,7 @@ class GameState:
         self.active = True
         await self.Display(ctx)
         await self.Save()
+        await self.Status_Listening(bot, self.players[self.index])
 
     # can message during day - checks if alarm alert should occur or not
     def CanMessageDuringDaytime(self):
@@ -165,6 +166,8 @@ class GameState:
 
         await ctx.channel.send(output, embed=message)
 
+
+
     # display configuration of active game state
     async def DisplayConfig(self, ctx, bot):
 
@@ -196,12 +199,12 @@ class GameState:
                 await self.ReadUser(bot, name)
 
         await ctx.channel.send("Known players:")
-        await ctx.channel.send(await self.PrintSimple(False))
-        await ctx.channel.send("Game order:")
         await ctx.channel.send(await self.PrintSimple(True))
+        await ctx.channel.send("Game order:")
+        await ctx.channel.send(await self.PrintSimple(False))
 
     # end current game
-    async def End(self, ctx):
+    async def End(self, ctx, bot = None):
         self.active = False
         print('Ending game...')
         if self.silent:
@@ -211,6 +214,9 @@ class GameState:
         self.index = 0
         await self.Save()
 
+        if bot is not None:
+            await self.Status_Watching(bot, "for /begin")
+
     # next will manually progress game to next player, may result in end of game
     async def Next(self, ctx, bot):
         self.is_alarm_active = False
@@ -218,11 +224,14 @@ class GameState:
             self.index += 1
             await self.Save()
             await self.Display(ctx)
+            await self.Status_Listening(bot, self.players[self.index])
         else:
             if(self.active):
                 await self.End(ctx)
+                await state.Status_Watching(bot, "for /begin")
             else:
                 await self.Begin(ctx, bot) 
+                # set status in begin
 
     # print simple names known
     async def PrintSimple(self, game = False):
@@ -325,6 +334,21 @@ class GameState:
         random.shuffle(self.players)
         print('Shuffling...')
         await self.Save()
+
+    async def Status_Listening(self, bot, status: str):
+        if self.active:
+            user = self.mapping[self.players[self.index]]
+            activity = discord.Activity(type=discord.ActivityType.listening, name=user.name)
+            await bot.change_presence(status=discord.Status.online, activity=activity)
+        else:
+            await state.Status_Watching(bot, "for /begin")
+
+    async def Status_Watching(self, bot, status: str):
+        activity = discord.Activity(type=discord.ActivityType.watching, name=status)
+        await bot.change_presence(status=discord.Status.online, activity=activity)
+
+    async def Status_None(self, bot):
+        await bot.change_presence(status=discord.Status.online, activity=None)
 
     # test mode / goblin mode (word of the year 2022) - swaps players for goblin names useful for testing
     async def TestMode(self, is_test: bool, bot):
