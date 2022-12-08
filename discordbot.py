@@ -145,6 +145,7 @@ async def on_message(ctx):
 
     # Use a regular expression to remove any Discord ID from ctx.content.
     message_text = re.sub(r"<@\d+>\s*", "", ctx.content)
+    message_text = message_text.lower()
     
     # print(f"{ctx.author.mention} sent {message_text}")
     # print(image_responding_channel)
@@ -162,7 +163,8 @@ async def on_message(ctx):
             # Construct the response ctx.
             response = f"Hello {ctx.author.mention}! How are you doing?"
             await ctx.channel.send(response)
-        # not understood
+        elif("thank" in message_text):
+            await ctx.channel.send(f"You're welcome {ctx.author.mention}.")
         elif("right" in message_text):
             await ctx.channel.send(f"Fuck yeah {ctx.author.mention}")
         elif("why" in message_text or "what" in message_text):
