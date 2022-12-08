@@ -236,7 +236,7 @@ class GameState:
         else:
             if(self.active):
                 await self.End(ctx)
-                await state.Status_Watching(bot, "for /begin")
+                await self.Status_Watching(bot, "for /begin")
             else:
                 await self.Begin(ctx, bot) 
                 # set status in begin
@@ -346,7 +346,10 @@ class GameState:
     async def Status_Listening(self, bot, status: str):
         if self.active:
             user = self.mapping[self.players[self.index]]
-            activity = discord.Activity(type=discord.ActivityType.listening, name=user.name)
+            username = user
+            if hasattr(user, "name"):
+                username = user.name
+            activity = discord.Activity(type=discord.ActivityType.listening, name=username)
             await bot.change_presence(status=discord.Status.online, activity=activity)
         else:
             await state.Status_Watching(bot, "for /begin")
