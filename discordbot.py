@@ -281,7 +281,7 @@ async def secret(ctx):
             channel_match = match.group(1)
             print(channel_match)
         
-            channel = bot.get_channel(channel_match)
+            channel = guild.get_channel(channel_match)
 
             if channel is not None:
                 sending_message = ctx.message.content.split(f'{channel_match}>')[1].strip()
