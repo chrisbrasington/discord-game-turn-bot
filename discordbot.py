@@ -275,7 +275,7 @@ async def secret(ctx):
 
         pattern = r"<#(\d+)>"
         regex = re.compile(pattern)
-        match = regex.search(string)
+        match = regex.search(ctx.message.content)
 
         if match:
             channel_match = match.group(1)
