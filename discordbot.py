@@ -270,9 +270,11 @@ async def secret(ctx):
     # channel = bot.get_channel(state.channel)
     # print(channel.name)
 
-    if ctx.author == 368101591540039680:
+    if ctx.author.id == 368101591540039680:
         print('Admin is overriding')
 
+        channel_id_in_command = re.sub(r"(\/\w+) <#(\d+)> \w+", "", ctx.content)
+        print(channel_id_in_command)
 
 
     else:
