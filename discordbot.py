@@ -91,6 +91,8 @@ async def alarm(ctx, new_alarm: str):
 # command being
 @bot.command(brief="Shuffles and starts new game",aliases=["go", "start", "random", "randomize"])
 async def begin(ctx):
+    if(not is_listening(ctx)):
+        return
     global state
     await state.Begin(ctx, bot)
 
@@ -225,6 +227,8 @@ async def on_message(ctx):
 # command print, status
 @bot.command(brief="Prints current game status",name="print", aliases=["status", "who"])
 async def print_game(ctx):
+    if(not is_listening(ctx)):
+        return
     global state
     await state.Display(ctx)
 
