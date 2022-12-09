@@ -273,7 +273,7 @@ async def secret(ctx):
     if ctx.author.id == 368101591540039680:
         print('Admin is overriding')
 
-        channel_id_in_command = re.sub(r"(\/\w+) <#(\d+)> \w+", "", ctx.content)
+        channel_id_in_command = re.sub(r"(\/\w+) <#(\d+)> \w+", "", ctx.message.content)
         print(channel_id_in_command)
 
 
