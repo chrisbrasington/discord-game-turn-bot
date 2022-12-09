@@ -9,6 +9,7 @@ from classes.gamestate import GameState, GameStateEncoder
 state = None
 
 guild_id = 270032432747642881
+admin = 368101591540039680
 
 # create bot with / commands
 bot = commands.Bot(
@@ -263,10 +264,19 @@ async def restart (ctx):
 async def secret(ctx):
     global bot, guild_id, state
     print(ctx.message)
+    print(ctx.message.content)
     guild = bot.get_guild(guild_id)
-    print(guild.name)
+    # print(guild.name)
     # channel = bot.get_channel(state.channel)
     # print(channel.name)
+
+    if ctx.author == 368101591540039680:
+        print('Admin is overriding')
+
+
+
+    else:
+        print('Non admin is using secret command, ignoring')
 
 
 # command silent - toggle @ curring player
