@@ -16,7 +16,6 @@ class GameState:
         is_test=False, names=[], players=[], silent = False):
 
         self.active = active
-        self.is_alarm_active = False
         self.silent = silent
         self.names = names
         self.players = players
@@ -103,7 +102,7 @@ class GameState:
             return
 
         alarm_text = 'Alarm is disabled'
-        if self.alarm_hours > 0 and not self.is_alarm_active:
+        if self.alarm_hours > 0 :
             # set alarm reminder for active player
             alarm_text = f"setting alarm to {self.alarm_hours} hour(s)"
             print(alarm_text)
@@ -226,7 +225,6 @@ class GameState:
 
     # next will manually progress game to next player, may result in end of game
     async def Next(self, ctx, bot):
-        self.is_alarm_active = False
         if(self.index != len(self.players)-1):
             self.index += 1
             await self.Save()
