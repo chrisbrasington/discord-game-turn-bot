@@ -46,7 +46,7 @@ async def on_ready():
     await state.ReadAllUsers(bot)
 
     if(state.active):
-        print(f'Ready. Current player: {state.players[state.index]}')
+        print(f'Ready. Current player: {state.mapping[state.index]}')
         await state.Status_Listening(bot, state.players[state.index])
     else:
         print('Ready, no game active')
