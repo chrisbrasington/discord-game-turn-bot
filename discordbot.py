@@ -44,11 +44,12 @@ async def on_ready():
     global bot, state
     print('Reading usernames...')
     await state.ReadAllUsers(bot)
-    print('Ready')
 
     if(state.active):
+        print(f'Ready. Current player: {state.players[state.index]}')
         await state.Status_Listening(bot, state.players[state.index])
     else:
+        print('Ready, no game active')
         await state.Status_Watching(bot, "for /begin")
 
 # command add player
