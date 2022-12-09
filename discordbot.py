@@ -8,6 +8,8 @@ from classes.gamestate import GameState, GameStateEncoder
 # game state
 state = None
 
+guild_id = 270032432747642881
+
 # create bot with / commands
 bot = commands.Bot(
     command_prefix="/", 
@@ -256,6 +258,15 @@ async def restart (ctx):
 
     await ctx.channel.send("Restarted")
     await state.DisplayConfig(ctx, bot)
+
+@bot.command()
+async def secret(ctx):
+    global bot, guild_id, state
+    guild = bot.get_guild(guild_id)
+    print(guild.name)
+    channel = bot.get_channel(state.channel)
+    print(channel.name)
+
 
 # command silent - toggle @ curring player
 @bot.command(brief="Toggles if @ messaging is used during turns")
