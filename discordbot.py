@@ -273,7 +273,9 @@ async def secret(ctx):
     if ctx.author.id == 368101591540039680:
         print('Admin is overriding')
 
-        match = re.search(r"(\/\w+)<#(\d+)>\w+", ctx.message.content)
+        pattern = r"<#(\d+)>"
+        regex = re.compile(pattern)
+        match = regex.search(string)
 
         if match:
             channel_match = match.group(1)
