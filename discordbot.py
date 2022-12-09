@@ -278,7 +278,7 @@ async def secret(ctx):
         match = regex.search(ctx.message.content)
 
         if match:
-            channel_match = match.group(1)
+            channel_match = int(match.group(1))
             print(channel_match)
         
             channel = guild.get_channel(channel_match)
