@@ -52,6 +52,8 @@ async def on_ready():
         print('Ready, no game active')
         await state.Status_Watching(bot, "for /begin")
 
+    print(f'Alarm is {state.alarm_hours}')
+
 # command add player
 @bot.command(brief="Adds player to game. If game is active, goes to end of list")
 async def add(ctx, names: str):
