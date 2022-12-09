@@ -12,7 +12,7 @@ class GameState:
     # read players from file if exists
     # reading game state from file should be done by deserization
     # at constructor of GameState object outside of this class
-    def __init__(self, active=False, alarm_hours=4, channel='🤖bot-commands', index=0, 
+    def __init__(self, active=False, alarm_hours=0, channel='🤖bot-commands', index=0, 
         is_test=False, names=[], players=[], silent = False):
 
         self.active = active
