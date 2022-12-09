@@ -18,7 +18,6 @@ class GameState:
         self.active = active
         self.is_alarm_active = False
         self.silent = silent
-        self.silent = True
         self.names = names
         self.players = players
         self.mapping = {} # not serializable, will recreate

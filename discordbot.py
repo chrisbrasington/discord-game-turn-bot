@@ -235,9 +235,9 @@ async def print_game(ctx):
 # command removes a player from the game
 @bot.command(brief="Removes player from game")
 async def remove(ctx, name: str):
-    global state
     if(not is_listening(ctx)):
         return
+    global state
 
     if await state.Remove(name):
         await ctx.channel.send(f"Removed {name}")
