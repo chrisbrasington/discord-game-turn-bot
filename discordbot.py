@@ -287,6 +287,8 @@ async def secret(ctx):
                 sending_message = ctx.message.content.split(f'{channel_match}>')[1].strip()
                 print(f'channel found: {channel.name}')
                 print(f'{sending_message}')
+            else:
+                print('channel not found')
 
 
 
