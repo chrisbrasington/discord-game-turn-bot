@@ -196,6 +196,8 @@ async def on_message(ctx):
                 await ctx.channel.send(f"Fuck yeah {ctx.author.mention}")
             elif("why" in message_text or "what" in message_text):
                 await ctx.channel.send("Sorry.. go ask chat.openai")
+            elif("nice moves" in message_text or "dance" in message_text):
+                await ctx.channel.send("♪┏(・o・)┛♪┗ ( ・o・) ┓♪")
             elif("config" in message_text):
                 await state.DisplayConfig(ctx, bot)
             else:
@@ -290,8 +292,6 @@ async def secret(ctx):
                 await channel.send(sending_message)
             else:
                 print('channel not found')
-
-
 
     else:
         print('Non admin is using secret command, ignoring')
