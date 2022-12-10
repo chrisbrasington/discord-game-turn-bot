@@ -291,14 +291,11 @@ async def secret(ctx):
                 print(f'{sending_message_text}')
 
                 if ctx.message.attachments:
-                    new_message = discord.Message(
-                        channel = channel,
-                        data = sending_message_text,
-                        state = None
+                    new_message = channel.create(
+                        content=sending_message_text,
+                        attachments=ctx.message.attachments
                     )
-                    new_message.attachments = ctx.message.attachments
                     await channel.send(new_message)
-
                 else:
                     await channel.send(sending_message_text)
             else:
