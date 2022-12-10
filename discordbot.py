@@ -295,7 +295,7 @@ async def secret(ctx):
                 if ctx.message.attachments:
                     print('sending attachments')
                     for attachment in ctx.message.attachments:
-                        channel.send(attachment.url)
+                        await channel.send(attachment.url)
             else:
                 print('channel not found')
 
