@@ -291,7 +291,7 @@ async def secret(ctx):
 
             if channel is not None:
                 sending_message_text = ctx.message.content.split(f'{channel_match}>')[1].strip()
-                print(f'{channel.name}: {sending_message_text')
+                print(f'{channel.name}: {sending_message_text}')
 
                 await channel.send(sending_message_text)
 
