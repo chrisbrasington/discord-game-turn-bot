@@ -213,7 +213,7 @@ async def on_message(ctx):
             if ctx.attachments:
                 for attachment in ctx.attachments:
                     # if attachment.is_image:
-                    if attachment.filename.endswith((".png", ".jpg", ".gif")):
+                    if attachment.filename.endswith((".png", ".jpg", ".gif", ".webp")):
                         print("Progressing game")
                         containsImage = True
 
