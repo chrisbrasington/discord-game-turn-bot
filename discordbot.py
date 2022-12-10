@@ -9,7 +9,7 @@ from classes.gamestate import GameState, GameStateEncoder
 state = None
 
 guild_id = 270032432747642881
-admin = 368101591540039680
+admin_id = 368101591540039680
 
 # create bot with / commands
 bot = commands.Bot(
@@ -262,7 +262,7 @@ async def restart (ctx):
 
 @bot.command()
 async def secret(ctx):
-    global bot, guild_id, state
+    global admin_id, bot, guild_id, state
     print(ctx.message)
     print(ctx.message.content)
     guild = bot.get_guild(guild_id)
@@ -270,7 +270,7 @@ async def secret(ctx):
     # channel = bot.get_channel(state.channel)
     # print(channel.name)
 
-    if ctx.author.id == 368101591540039680:
+    if ctx.author.id == admin_id:
         print('Admin is overriding')
 
         pattern = r"<#(\d+)>"
@@ -287,6 +287,7 @@ async def secret(ctx):
                 sending_message = ctx.message.content.split(f'{channel_match}>')[1].strip()
                 print(f'channel found: {channel.name}')
                 print(f'{sending_message}')
+                channel.send(sending_message)
             else:
                 print('channel not found')
 
