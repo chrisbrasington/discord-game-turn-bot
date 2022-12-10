@@ -290,8 +290,8 @@ async def secret(ctx):
                 print(f'channel found: {channel.name}')
                 print(f'{sending_message_text}')
 
-                if ctx.attachments:
-                    files = [discord.File(a.url, a.filename) for a in ctx.attachments]
+                if ctx.message.attachments:
+                    files = [discord.File(a.url, a.filename) for a in ctx.message.attachments]
                     await channel.send(sending_message_text, files=files)
                 else:
                     await channel.send(sending_message_text)
