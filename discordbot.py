@@ -184,8 +184,8 @@ async def on_message(ctx):
     # message intended for bot
     if bot.user in ctx.mentions:
         print("Message intended for bot")
-        if '/secret/' not in message_text:
-            print(f"{ctx.author.mention} sent {message_text}")
+        # if '/secret/' not in message_text:
+        #     print(f"{state.mapping[ctx.author.mention]} sent {message_text}")
 
     # bot was mentioned
     if bot.user in ctx.mentions:
