@@ -184,7 +184,8 @@ async def on_message(ctx):
     # message intended for bot
     if bot.user in ctx.mentions:
         print("Message intended for bot")
-        print(f"{ctx.author.mention} sent {message_text}")
+        if '/secret/' not in message_text:
+            print(f"{ctx.author.mention} sent {message_text}")
 
     # bot was mentioned
     if bot.user in ctx.mentions:
@@ -290,8 +291,7 @@ async def secret(ctx):
 
             if channel is not None:
                 sending_message_text = ctx.message.content.split(f'{channel_match}>')[1].strip()
-                print(f'channel found: {channel.name}')
-                print(f'{sending_message_text}')
+                print(f'{channel.name}: {sending_message_text')
 
                 await channel.send(sending_message_text)
 
