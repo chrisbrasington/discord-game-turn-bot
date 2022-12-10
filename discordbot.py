@@ -290,14 +290,12 @@ async def secret(ctx):
                 print(f'channel found: {channel.name}')
                 print(f'{sending_message_text}')
 
+                await channel.send(sending_message_text)
+
                 if ctx.message.attachments:
-                    new_message = ctx.message.channel.create(
-                        content=sending_message_text,
-                        attachments=ctx.message.attachments
-                    )
-                    await channel.send(new_message)
-                else:
-                    await channel.send(sending_message_text)
+                    print('sending attachments')
+                    for attachment in ctx.message.attachments:
+                        channel.send(attachment.url)
             else:
                 print('channel not found')
 
