@@ -286,10 +286,17 @@ async def secret(ctx):
             channel = guild.get_channel(channel_match)
 
             if channel is not None:
-                sending_message = ctx.message.content.split(f'{channel_match}>')[1].strip()
+                sending_message_text = ctx.message.content.split(f'{channel_match}>')[1].strip()
                 print(f'channel found: {channel.name}')
-                print(f'{sending_message}')
-                await channel.send(sending_message)
+                print(f'{sending_message_text}')
+
+                message = discord.Message(content=sending_message_text)
+
+                if ctx.message.attachment:
+                    files = [discord.File(a.url, a.filename) for a in message.attachments]
+                    message = discord.Message(content=sending_message_text, files=files)
+                
+                await channel.send(sending_message_text)
             else:
                 print('channel not found')
 
