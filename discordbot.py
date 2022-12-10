@@ -265,24 +265,22 @@ async def restart (ctx):
 @bot.command()
 async def secret(ctx):
     global admin_id, bot, guild_id, state
-    print(ctx.message)
-    print(ctx.message.content)
+    # print(ctx.message)
+    # print(ctx.message.content)
     guild = bot.get_guild(guild_id)
     # print(guild.name)
     # channel = bot.get_channel(state.channel)
     # print(channel.name)
 
     if ctx.author.id == admin_id:
-        print('Admin is overriding')
+        print('Neurons firing..')
 
         pattern = r"<#(\d+)>"
         regex = re.compile(pattern)
         match = regex.search(ctx.message.content)
 
         if match:
-            channel_match = int(match.group(1))
-            print(channel_match)
-        
+            channel_match = int(match.group(1))        
             channel = guild.get_channel(channel_match)
 
             if channel is not None:

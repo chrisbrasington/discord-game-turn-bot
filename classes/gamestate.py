@@ -140,7 +140,7 @@ class GameState:
             user = self.mapping[self.players[self.index]]
             print(f'Current player:{user.name}')
             avatar = user.avatar
-            print(avatar)
+            # print(avatar)
 
         # all players
         i = 0
