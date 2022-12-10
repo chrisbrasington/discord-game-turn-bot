@@ -108,6 +108,11 @@ async def config(ctx):
     global state
     await state.DisplayConfig(ctx, bot)
 
+# dance
+@bot.command()
+async def dance(ctx):
+    await ctx.send("♪┏(・o・)┛♪┗ ( ・o・) ┓♪")
+
 # command end
 @bot.command(brief="End game")
 async def end(ctx):
