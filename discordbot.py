@@ -242,8 +242,8 @@ async def on_message(ctx):
 # command print, status
 @bot.command(brief="Prints current game status",name="print", aliases=["status", "who"])
 async def print_game(ctx):
-    if(not is_listening(ctx)):
-        return
+    # if(not is_listening(ctx)):
+    #     return
     global state
     await state.Display(ctx)
 
