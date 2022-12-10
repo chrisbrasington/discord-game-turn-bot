@@ -167,7 +167,7 @@ class GameState:
 
         message = discord.Embed(
             title= '',
-            description='[Generate image on craiyon](<https://www.craiyon.com/>)\n\n'
+            description='[Generate image on craiyon](<https://www.craiyon.com/>)\n[Generate image on stable-diffusion](<https://huggingface.co/spaces/stabilityai/stable-diffusion>)'
         )
         # message.set_image(url=avatar)
         message.set_thumbnail(url=avatar)
