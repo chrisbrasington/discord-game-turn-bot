@@ -291,7 +291,7 @@ async def secret(ctx):
                 print(f'{sending_message_text}')
 
                 if ctx.message.attachments:
-                    new_message = channel.create(
+                    new_message = ctx.message.channel.create(
                         content=sending_message_text,
                         attachments=ctx.message.attachments
                     )
