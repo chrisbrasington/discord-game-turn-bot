@@ -234,7 +234,7 @@ async def on_message(ctx):
             if not containsImage:
                 print("Active player is chatting")
 
-    if ctx.content.startswith('/'):
+    if ctx.content.startswith('/') and not ctx.content.startswith('/secret'):
         print(f"{ctx.author} sent {message_text}")
         await bot.process_commands(ctx)
 
