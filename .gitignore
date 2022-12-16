@@ -2,3 +2,4 @@
 *.json
 *old
 *__pycache__*
+*.backup
