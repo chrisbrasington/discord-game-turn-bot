@@ -201,7 +201,16 @@ class GameState:
 
         await ctx.channel.send(f'Known players: {await self.PrintSimple(True)}')
         await ctx.channel.send(f'Game order: {await self.PrintSimple(False)}')
-        await ctx.channel.send(f'Alias: {self.mapping}')
+
+        temp_alias = []
+
+        for user in self.mapping:
+            if user.nick is None or user.nick == 'None':
+                temp_alias.append(user.name)
+            else:
+                temp_alias.append(user.nick)
+
+        await ctx.channel.send(f'Alias: {temp_alias}')
         await ctx.channel.send(f'Recorded images: {len(game_images)}')
         print(game_images)
 
