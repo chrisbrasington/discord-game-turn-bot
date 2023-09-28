@@ -11,6 +11,8 @@ state = None
 guild_id = 270032432747642881
 admin_id = 368101591540039680
 
+game_images = []
+
 # create bot with / commands
 bot = commands.Bot(
     command_prefix="/", 
@@ -71,7 +73,8 @@ async def add(ctx, names: str):
     if name_check == str(bot.user.id):
         await ctx.channel.send("No thanks, I run the game. I'm not smart enough to play it... yet.\n\nAlso what's with you and testing edge-cases?")
     else:
-        if await state.Add(bot, names):
+        guild = bot.get_guild(guild_id)
+        if await state.Add(bot, names, guild):
             await ctx.channel.send("Added Player")
             await state.DisplayConfig(ctx, bot)
         else:
@@ -121,8 +124,9 @@ async def dance(ctx):
 async def end(ctx):
     if(not is_listening(ctx)):
         return
-    global state
-    await state.End(ctx, bot)
+    global state, game_images
+    await state.End(ctx, bot, game_images)
+    game_images = []
 
 # command test - sets players to test players
 @bot.command(brief="aka /goblinmode - swaps players for test goblins",name="gametest", aliases=["testmode", "goblinmode"])
@@ -157,7 +161,7 @@ async def next(ctx):
 # on message sent to channel
 @bot.event
 async def on_message(ctx):
-    global state
+    global state, game_images
 
     if ctx.author == bot.user:
         return
@@ -224,6 +228,10 @@ async def on_message(ctx):
 
             # image detection
             if ctx.attachments:
+
+                attachment_url = ctx.attachments[0].url
+                game_images.append((ctx.author.nick, attachment_url))
+     
                 for attachment in ctx.attachments:
                     # if attachment.is_image:
                     if attachment.filename.endswith((".png", ".jpg", ".gif", ".webp")):
@@ -232,7 +240,8 @@ async def on_message(ctx):
 
                         # progress
                         if(state.index == len(state.players)-1):
-                            await state.End(ctx)
+                            await state.End(ctx, bot, game_images)
+                            game_images = []
                             break
                         else:
                             await state.Next(ctx, bot)
