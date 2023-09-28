@@ -234,7 +234,7 @@ class GameState:
             await self.Status_Watching(bot, "for /begin")
 
     # next will manually progress game to next player, may result in end of game
-    async def Next(self, ctx, bot):
+    async def Next(self, ctx, bot, game_images):
         if(self.index != len(self.players)-1):
             self.index += 1
             await self.Save()
@@ -242,7 +242,7 @@ class GameState:
             await self.Status_Listening(bot, self.players[self.index])
         else:
             if(self.active):
-                await self.End(ctx)
+                await self.End(ctx, bot, game_images)
                 await self.Status_Watching(bot, "for /begin")
             else:
                 await self.Begin(ctx, bot) 

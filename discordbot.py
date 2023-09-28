@@ -78,7 +78,7 @@ async def add(ctx, names: str):
             await ctx.channel.send("Added Player")
             await state.DisplayConfig(ctx, bot)
         else:
-            await ctx.channel.send(f"{name} already exists")
+            await ctx.channel.send('Player already in game')
 
 # set alarm
 @bot.command(brief="Set player alarm in hours")
@@ -155,8 +155,8 @@ async def listen(ctx):
 async def next(ctx):
     if(not is_listening(ctx)):
         return
-    global state
-    await state.Next(ctx, bot)
+    global state, game_images
+    await state.Next(ctx, bot, game_images)
 
 # on message sent to channel
 @bot.event
@@ -231,6 +231,9 @@ async def on_message(ctx):
 
                 attachment_url = ctx.attachments[0].url
                 game_images.append((ctx.author.nick, attachment_url))
+
+                print('recorded progress: ')
+                print(game_images)
      
                 for attachment in ctx.attachments:
                     # if attachment.is_image:
