@@ -125,3 +125,9 @@ You can also type /help category for more info on a category.
 - `players.json` - file containing a list of players in the game
 - `gamestate.json` - file containing prior game state, saved on change
 - `test.json` - test goblins
+
+## Docker
+
+docker build -t ai-telephone-bot .
+docker run -d --name ai-telephone-bot ai-telephone-bot
+docker logs -f ai-telephone-bot
