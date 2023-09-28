@@ -217,8 +217,7 @@ class GameState:
         # print all the game progression of images
         for player_name, image_url in game_images:
 
-            # i = is f'ign wrong, but a weird glitch that hides the hyperlinK??
-            hyperlink = f"[i]({image_url})"
+            hyperlink = f" [- link]({image_url})"
             print(hyperlink)
             await ctx.channel.send(f'{i} - {player_name}{hyperlink}')
             i+=1
