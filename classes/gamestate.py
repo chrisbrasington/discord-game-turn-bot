@@ -200,6 +200,7 @@ class GameState:
         await ctx.channel.send(f'Known players: {await self.PrintSimple(True)}')
         await ctx.channel.send(f'Game order: {await self.PrintSimple(False)}')
         await ctx.channel.send(f'Recorded images: {len(game_images)}')
+        print(game_images)
 
     # end current game
     async def End(self, ctx, bot, game_images):
