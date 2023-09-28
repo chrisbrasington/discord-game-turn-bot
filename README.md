@@ -130,6 +130,6 @@ You can also type /help category for more info on a category.
 
 docker build -t ai-telephone-bot .
 
-docker run -d --name ai-telephone-bot ai-telephone-bot
+docker run -d -t --name ai-telephone-bot ai-telephone-bot:latest
 
 docker logs -f ai-telephone-bot
