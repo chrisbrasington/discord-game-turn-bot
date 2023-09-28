@@ -105,7 +105,9 @@ async def alarm(ctx, new_alarm: str):
 async def begin(ctx):
     if(not is_listening(ctx)):
         return
-    global state
+    global state, game_images
+    # reset game images in memory
+    game_images = []
     await state.Begin(ctx, bot)
 
 # command test
