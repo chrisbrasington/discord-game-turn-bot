@@ -305,11 +305,13 @@ class GameState:
             member = await guild.fetch_member(id)
 
             if member is None:
-                print(user.name + ' no alias')
                 self.mapping[name] = user.name
+                print(self.mapping[name])
+                print('  no alias')
             else:
-                print(user.name + ' as ' + member.nick)
                 self.mapping[name] = member
+                print(self.mapping[name])
+                print('  found alias')
 
         else:
             self.mapping[name] = name
