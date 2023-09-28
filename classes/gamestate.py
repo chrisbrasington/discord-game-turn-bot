@@ -194,8 +194,6 @@ class GameState:
         output += f'\nIndex is {self.index}'
         if self.alarm_hours != 0:
             output += f'\nAlarm is set to  {self.alarm_hours}'
-        else:
-            output += '\nAlarm is disabled'
 
         await ctx.channel.send(output)
 
