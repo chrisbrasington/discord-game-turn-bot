@@ -197,12 +197,9 @@ class GameState:
             for name in self.names:
                 await self.ReadUser(bot, name, guild)
 
-        await ctx.channel.send("Known players:")
-        await ctx.channel.send(await self.PrintSimple(True))
-        await ctx.channel.send("Game order:")
-        await ctx.channel.send(await self.PrintSimple(False))
-        await ctx.channel.send('Recorded progress:')
-        await ctx.channel.send(game_images)
+        await ctx.channel.send(f'Known players: {await self.PrintSimple(True)}')
+        await ctx.channel.send(f'Game order: {await self.PrintSimple(False)}')
+        await ctx.channel.send(f'Recorded images: {len(game_images)}')
 
     # end current game
     async def End(self, ctx, bot, game_images):
