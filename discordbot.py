@@ -230,7 +230,13 @@ async def on_message(ctx):
             if ctx.attachments:
 
                 attachment_url = ctx.attachments[0].url
-                game_images.append((ctx.author.nick, attachment_url))
+
+                name = ctx.author.name
+
+                if ctx.author.nick is not None and ctx.author.nick != 'None':
+                    name = ctx.author.nick
+
+                game_images.append((name, attachment_url))
 
                 print('recorded progress: ')
                 print(game_images)

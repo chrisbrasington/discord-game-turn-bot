@@ -137,7 +137,9 @@ class GameState:
 
         if '@' in self.players[self.index]:
             user = self.mapping[self.players[self.index]]
-            print(f'Current player:{user.nick}')
+
+            print(f'Current player:{user.nick}')    
+
             avatar = user.avatar
             # print(avatar)
 
@@ -150,12 +152,12 @@ class GameState:
                 output += "    "
             i += 1
 
-            if '@' in name:
-                member = self.mapping[name]
-                output += f'{member.nick}\n'
+            member = self.mapping[name]
 
-            else: 
-                output += f"{name}\n"
+            if member.nick is None or member.nick == 'None':
+                output += f'{member.name}\n'
+            else:
+                output += f'{member.nick}\n'
 
         print(output)
 
@@ -227,6 +229,9 @@ class GameState:
 
         await ctx.channel.send('Game over! Start with /begin')
 
+        print('reloading alias in case of change')
+        await self.ReadAllUsers(bot, ctx.guild)
+
         self.index = 0
         await self.Save()
 
@@ -291,6 +296,8 @@ class GameState:
     # read all names (discord IDs) as discord usernames
     # slow, so done once and cached
     async def ReadAllUsers(self, bot, guild):
+        print('reading user alias into cache...')
+        self.mapping = {}
         for name in self.names:
             await self.ReadUser(bot, name, guild)
 
@@ -299,24 +306,34 @@ class GameState:
 
         print('user: ' + name + ' in guild ' + str(guild.name))
 
+        username = ''
+        alias = None
+
         if '@' in name:
             id = int(name.replace('<', '').replace('@', '').replace('>', ''))
             user = await bot.fetch_user(id)
             member = await guild.fetch_member(id)
 
-            if member is None:
-                self.mapping[name] = user.name
-                print(self.mapping[name])
-                print('  no alias')
-            else:
-                self.mapping[name] = member
-                print(self.mapping[name])
-                print('  found alias')
+            self.mapping[name] = member
+
+            username = user.name
+
+            if member.nick is not None and member.nick != 'None':
+                alias = member.nick
 
         else:
             self.mapping[name] = name
 
-        print(f"read: {self.mapping[name]}")
+        print(f'user: {username}')
+        print(f'alias: {alias}')
+
+        if alias is None:
+            print('✘ alias')
+        else:
+            print('✅ alias')
+        print()
+
+        
         return self.mapping[name]
 
     # remove player from names and game list
