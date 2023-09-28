@@ -27,7 +27,7 @@ class GameState:
         self.ReadPlayerFile(self.player_file, False)
 
     # add player to names and game
-    async def Add(self, bot, new_name: str):
+    async def Add(self, bot, new_name: str, guild):
         print("add command:")
 
         for single_name in new_name.split(","):
@@ -40,7 +40,7 @@ class GameState:
                     self.names.append(single_name)
                     self.players.append(single_name)
 
-                    await self.ReadUser(bot, single_name)
+                    await self.ReadUser(bot, single_name, guild)
 
                     await self.Save()
                     return True
@@ -125,8 +125,7 @@ class GameState:
 
         # new game
         if(self.index == 0):
-            output = "New Game begin! - "
-            output += f"{alarm_text}\n\n"
+            output = "New Game begin!\n"
 
         avatar = None
 
@@ -138,7 +137,7 @@ class GameState:
 
         if '@' in self.players[self.index]:
             user = self.mapping[self.players[self.index]]
-            print(f'Current player:{user.name}')
+            print(f'Current player:{user.nick}')
             avatar = user.avatar
             # print(avatar)
 
@@ -152,13 +151,8 @@ class GameState:
             i += 1
 
             if '@' in name:
-                # id = int(name.replace("<", "").replace("@", "").replace(">", ""))
-                # user = await bot.fetch_user(id)
-                # m = ctx.guild.get_member(id)
-
-                user = self.mapping[name]
-
-                output += f'{user.name}\n'
+                member = self.mapping[name]
+                output += f'{member.nick}\n'
 
             else: 
                 output += f"{name}\n"
@@ -194,15 +188,14 @@ class GameState:
         output += f'\nIndex is {self.index}'
         if self.alarm_hours != 0:
             output += f'\nAlarm is set to  {self.alarm_hours}'
-        else:
-            output += '\nAlarm is disabled'
 
         await ctx.channel.send(output)
 
         if self.mapping == {}:
             await ctx.channel.send('Reading usernames into cache... one moment please...')
+            guild = bot.get_guild(guild_id)
             for name in self.names:
-                await self.ReadUser(bot, name)
+                await self.ReadUser(bot, name, guild)
 
         await ctx.channel.send("Known players:")
         await ctx.channel.send(await self.PrintSimple(True))
@@ -210,13 +203,31 @@ class GameState:
         await ctx.channel.send(await self.PrintSimple(False))
 
     # end current game
-    async def End(self, ctx, bot = None):
+    async def End(self, ctx, bot, game_images):
         self.active = False
         print('Ending game...')
         if self.silent:
-            await ctx.channel.send(f"Game over! Start new with /begin")
+            await ctx.channel.send(f"Game over!")
         else:
-            await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}! Start new with /begin")
+            await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}!")
+
+        await ctx.channel.send('Here\'s the result of the game:')
+
+        i = 1
+        # print all the game progression of images
+        for player_name, image_url in game_images:
+
+            # i = is f'ign wrong, but a weird glitch that hides the hyperlinK??
+            hyperlink = f"[i]({image_url})"
+            print(hyperlink)
+            await ctx.channel.send(f'{i} - {player_name}{hyperlink}')
+            i+=1
+
+        # reset game images in memory
+        game_images = []
+
+        await ctx.channel.send('Game over! Start with /begin')
+
         self.index = 0
         await self.Save()
 
@@ -280,16 +291,23 @@ class GameState:
 
     # read all names (discord IDs) as discord usernames
     # slow, so done once and cached
-    async def ReadAllUsers(self, bot):
+    async def ReadAllUsers(self, bot, guild):
         for name in self.names:
-            await self.ReadUser(bot, name)
+            await self.ReadUser(bot, name, guild)
 
     # read individual name (discord ID) as discord username
-    async def ReadUser(self, bot, name: str):
+    async def ReadUser(self, bot, name: str, guild):
+
+        print('user: ' + name + ' in guild ' + str(guild.name))
+
         if '@' in name:
             id = int(name.replace('<', '').replace('@', '').replace('>', ''))
             user = await bot.fetch_user(id)
-            self.mapping[name] = user
+            member = await guild.fetch_member(id)
+
+            print(user.name + ' as ' + member.nick)
+
+            self.mapping[name] = member
         else:
             self.mapping[name] = name
 
