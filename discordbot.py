@@ -247,7 +247,7 @@ async def on_message(ctx):
                             game_images = []
                             break
                         else:
-                            await state.Next(ctx, bot)
+                            await state.Next(ctx, bot, game_images)
                             break
             # do not progress
             if not containsImage:

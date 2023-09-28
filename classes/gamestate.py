@@ -322,6 +322,22 @@ class GameState:
     # remove player from names and game list
     async def Remove(self, name: str):
         print(f'Removing {name}')
+
+        player_count = len(self.players)
+        player_index = 0
+
+        for player in self.players:
+            if player == name:
+                break
+
+        print(f'Player found at index: {player_index}')
+
+        if player_index < self.index:
+            self.index -= 1
+        
+        if self.index < 0:
+            self.index = 0
+
         removed = False
         if name in self.names:
             self.names.remove(name)
