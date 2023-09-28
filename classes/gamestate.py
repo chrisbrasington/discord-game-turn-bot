@@ -169,7 +169,7 @@ class GameState:
         await ctx.channel.send(output, embed=message)
 
     # display configuration of active game state
-    async def DisplayConfig(self, ctx, bot):
+    async def DisplayConfig(self, ctx, bot, game_images):
 
         print(await self.Serialize())
 
@@ -201,6 +201,8 @@ class GameState:
         await ctx.channel.send(await self.PrintSimple(True))
         await ctx.channel.send("Game order:")
         await ctx.channel.send(await self.PrintSimple(False))
+        await ctx.channel.send('Recorded progress:')
+        await ctx.channel.send(game_images)
 
     # end current game
     async def End(self, ctx, bot, game_images):

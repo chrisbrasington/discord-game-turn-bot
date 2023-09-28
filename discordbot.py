@@ -65,7 +65,7 @@ async def on_ready():
 # command add player
 @bot.command(brief="Adds player to game. If game is active, goes to end of list")
 async def add(ctx, names: str):
-    global bot, state 
+    global bot, state, game_images
     if(not is_listening(ctx)):
         return
 
@@ -76,7 +76,7 @@ async def add(ctx, names: str):
         guild = bot.get_guild(guild_id)
         if await state.Add(bot, names, guild):
             await ctx.channel.send("Added Player")
-            await state.DisplayConfig(ctx, bot)
+            await state.DisplayConfig(ctx, bot, game_images)
         else:
             await ctx.channel.send('Player already in game')
 
@@ -111,8 +111,8 @@ async def begin(ctx):
 # command test
 @bot.command(brief="Shows configuration of bot")
 async def config(ctx):
-    global state
-    await state.DisplayConfig(ctx, bot)
+    global state, game_images
+    await state.DisplayConfig(ctx, bot, game_images)
 
 # dance
 @bot.command()
@@ -131,10 +131,10 @@ async def end(ctx):
 # command test - sets players to test players
 @bot.command(brief="aka /goblinmode - swaps players for test goblins",name="gametest", aliases=["testmode", "goblinmode"])
 async def gametest(ctx):
-    global state
+    global state, game_images
     await state.TestMode(True, bot)
     await state.ReadAllUsers(bot, ctx.guild)
-    await state.DisplayConfig(ctx, bot)
+    await state.DisplayConfig(ctx, bot, game_images)
 
 # command hello
 @bot.command(brief="Hello, World")
@@ -216,7 +216,7 @@ async def on_message(ctx):
             elif("nice moves" in message_text or "dance" in message_text):
                 await ctx.channel.send("♪┏(・o・)┛♪┗ ( ・o・) ┓♪")
             elif("config" in message_text):
-                await state.DisplayConfig(ctx, bot)
+                await state.DisplayConfig(ctx, bot, game_images)
             else:
                 await ctx.channel.send(f"{message_text}, you too {ctx.author.mention}.")
 
@@ -271,22 +271,22 @@ async def print_game(ctx):
 async def remove(ctx, name: str):
     if(not is_listening(ctx)):
         return
-    global state
+    global state, game_images
 
     if await state.Remove(name):
         await ctx.channel.send(f"Removed {name}")
-        await state.DisplayConfig(ctx, bot)
+        await state.DisplayConfig(ctx, bot, game_images)
     else:
         await ctx.channel.send(f"{name} not found")
 
 # command restart - can unload test to real players
 @bot.command(brief="Resets players (used for swapping out of test mode)")
 async def restart (ctx):
-    global state
+    global state, game_images
     await state.Restart(bot)
 
     await ctx.channel.send("Restarted")
-    await state.DisplayConfig(ctx, bot)
+    await state.DisplayConfig(ctx, bot, game_images)
 
 @bot.command()
 async def secret(ctx):
