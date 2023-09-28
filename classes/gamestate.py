@@ -304,9 +304,13 @@ class GameState:
             user = await bot.fetch_user(id)
             member = await guild.fetch_member(id)
 
-            print(user.name + ' as ' + member.nick)
+            if member is None:
+                print(user.name + ' no alias')
+                self.mapping[name] = user.name
+            else:
+                print(user.name + ' as ' + member.nick)
+                self.mapping[name] = member
 
-            self.mapping[name] = member
         else:
             self.mapping[name] = name
 
