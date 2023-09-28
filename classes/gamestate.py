@@ -173,6 +173,9 @@ class GameState:
     # display configuration of active game state
     async def DisplayConfig(self, ctx, bot, game_images):
 
+        # todo: fix this
+        guild_id = 270032432747642881
+
         print(await self.Serialize())
 
         if self.channel is None:
@@ -193,9 +196,10 @@ class GameState:
 
         await ctx.channel.send(output)
 
+        guild = bot.get_guild(guild_id)
+
         if self.mapping == {}:
             await ctx.channel.send('Reading usernames into cache... one moment please...')
-            guild = bot.get_guild(guild_id)
             for name in self.names:
                 await self.ReadUser(bot, name, guild)
 
@@ -205,10 +209,14 @@ class GameState:
         temp_alias = []
 
         for user in self.mapping:
-            if user.nick is None or user.nick == 'None':
-                temp_alias.append(user.name)
+
+            id = int(user.replace('<', '').replace('@', '').replace('>', ''))
+            member = await guild.fetch_member(id)
+
+            if member.nick is None or member.nick == 'None':
+                temp_alias.append(member.name)
             else:
-                temp_alias.append(user.nick)
+                temp_alias.append(member.nick)
 
         await ctx.channel.send(f'Alias: {temp_alias}')
         await ctx.channel.send(f'Recorded images: {len(game_images)}')
