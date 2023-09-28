@@ -237,10 +237,10 @@ class GameState:
         # reset game images in memory
         game_images = []
 
-        await ctx.channel.send('Game over! Start with /begin')
-
         print('reloading alias in case of change')
         await self.ReadAllUsers(bot, ctx.guild)
+
+        await ctx.channel.send('Game over! Start with /begin')
 
         self.index = 0
         await self.Save()
