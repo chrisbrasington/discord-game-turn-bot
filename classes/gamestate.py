@@ -125,8 +125,7 @@ class GameState:
 
         # new game
         if(self.index == 0):
-            output = "New Game begin! - "
-            output += f"{alarm_text}\n\n"
+            output = "New Game begin!\n"
 
         avatar = None
 
@@ -138,7 +137,7 @@ class GameState:
 
         if '@' in self.players[self.index]:
             user = self.mapping[self.players[self.index]]
-            print(f'Current player:{user.name}')
+            print(f'Current player:{user.nick}')
             avatar = user.avatar
             # print(avatar)
 
@@ -152,13 +151,8 @@ class GameState:
             i += 1
 
             if '@' in name:
-                # id = int(name.replace("<", "").replace("@", "").replace(">", ""))
-                # user = await bot.fetch_user(id)
-                # m = ctx.guild.get_member(id)
-
-                user = self.mapping[name]
-
-                output += f'{user.name}\n'
+                member = self.mapping[name]
+                output += f'{member.nick}\n'
 
             else: 
                 output += f"{name}\n"
@@ -278,16 +272,23 @@ class GameState:
 
     # read all names (discord IDs) as discord usernames
     # slow, so done once and cached
-    async def ReadAllUsers(self, bot):
+    async def ReadAllUsers(self, bot, guild):
         for name in self.names:
-            await self.ReadUser(bot, name)
+            await self.ReadUser(bot, name, guild)
 
     # read individual name (discord ID) as discord username
-    async def ReadUser(self, bot, name: str):
+    async def ReadUser(self, bot, name: str, guild):
+
+        print('user: ' + name + ' in guild ' + str(guild.name))
+
         if '@' in name:
             id = int(name.replace('<', '').replace('@', '').replace('>', ''))
             user = await bot.fetch_user(id)
-            self.mapping[name] = user
+            member = await guild.fetch_member(id)
+
+            print(user.name + ' as ' + member.nick)
+
+            self.mapping[name] = member
         else:
             self.mapping[name] = name
 

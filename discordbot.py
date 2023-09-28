@@ -44,9 +44,12 @@ async def init():
 # on bot ready, read usernames
 @bot.event
 async def on_ready():
-    global bot, state
+    global bot, state, guild_id
+
+    guild = bot.get_guild(guild_id)
+
     print('Reading usernames...')
-    await state.ReadAllUsers(bot)
+    await state.ReadAllUsers(bot, guild)
 
     if(state.active):
         print(f'Ready. Current player ({state.index}): {state.mapping[state.players[state.index]]} {state.players[state.index]}')
@@ -126,7 +129,7 @@ async def end(ctx):
 async def gametest(ctx):
     global state
     await state.TestMode(True, bot)
-    await state.ReadAllUsers(bot)
+    await state.ReadAllUsers(bot, ctx.guild)
     await state.DisplayConfig(ctx, bot)
 
 # command hello
@@ -169,7 +172,8 @@ async def on_message(ctx):
     if(state.mapping == {}):
         print('Reading all users first time')
         await ctx.channel.send('Reading usernames first time... one moment please...')
-        await state.ReadAllUsers(bot)
+
+        await state.ReadAllUsers(bot, ctx.guild)
     
     image_responding_channel = str(ctx.channel) == state.channel
 
@@ -182,10 +186,13 @@ async def on_message(ctx):
     # await print_simple(message)
 
     # message intended for bot
-    if bot.user in ctx.mentions:
-        print("Message intended for bot")
-        if '/secret/' not in message_text:
-            print(f"Mentioned: {state.mapping[ctx.author.mention]} sent {message_text}")
+    try:
+        if bot.user in ctx.mentions:
+            print("Message intended for bot")
+            if '/secret/' not in message_text:
+                print(f"Mentioned: {state.mapping[ctx.author.mention]} sent {message_text}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
     # bot was mentioned
     if bot.user in ctx.mentions:
