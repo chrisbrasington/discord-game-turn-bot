@@ -30,6 +30,8 @@ class GameState:
     async def Add(self, bot, new_name: str, guild):
         print("add command:")
 
+        print(f'Adding {new_name}')
+
         for single_name in new_name.split(","):
             if(single_name != ''):
                 if(single_name in self.names):
