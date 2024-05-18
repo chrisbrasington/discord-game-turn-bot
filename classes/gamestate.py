@@ -30,6 +30,8 @@ class GameState:
     async def Add(self, bot, new_name: str, guild):
         print("add command:")
 
+        print(f'Adding {new_name}')
+
         for single_name in new_name.split(","):
             if(single_name != ''):
                 if(single_name in self.names):
@@ -101,17 +103,6 @@ class GameState:
             await ctx.channel.send(output)
             return
 
-        alarm_text = 'Alarm is disabled'
-        if self.alarm_hours > 0 :
-            # set alarm reminder for active player
-            alarm_text = f"setting alarm to {self.alarm_hours} hour(s)"
-            print(alarm_text)
-            signal.signal(signal.SIGALRM, lambda signum, frame: 
-                asyncio.create_task(self.AlarmAlert(ctx, signal))
-            )
-            print(f'alarming in {self.alarm_hours} hour(s)')
-            signal.alarm(self.alarm_hours*self.SECONDS_PER_HOUR)
-
         # no players to start
         if(len(self.players) == 0):
             await ctx.channel.send("Add players first with /add @\{name\} command")
@@ -171,10 +162,7 @@ class GameState:
         await ctx.channel.send(output, embed=message)
 
     # display configuration of active game state
-    async def DisplayConfig(self, ctx, bot, game_images):
-
-        # todo: fix this
-        guild_id = 270032432747642881
+    async def DisplayConfig(self, ctx, bot, guild, game_images):
 
         print(await self.Serialize())
 
@@ -196,12 +184,12 @@ class GameState:
 
         await ctx.channel.send(output)
 
-        guild = bot.get_guild(guild_id)
+        actual_guild = bot.get_guild(guild.id)
 
         if self.mapping == {}:
             await ctx.channel.send('Reading usernames into cache... one moment please...')
             for name in self.names:
-                await self.ReadUser(bot, name, guild)
+                await self.ReadUser(bot, name, actual_guild)
 
         await ctx.channel.send(f'Known players: {await self.PrintSimple(True)}')
         await ctx.channel.send(f'Game order: {await self.PrintSimple(False)}')
@@ -211,7 +199,7 @@ class GameState:
         for user in self.mapping:
 
             id = int(user.replace('<', '').replace('@', '').replace('>', ''))
-            member = await guild.fetch_member(id)
+            member = await actual_guild.fetch_member(id)
 
             if member.nick is None or member.nick == 'None':
                 temp_alias.append(member.name)
@@ -318,6 +306,13 @@ class GameState:
         self.mapping = {}
         for name in self.names:
             await self.ReadUser(bot, name, guild)
+
+    async def GetAlias(self, bot, name: str, guild):
+        id = int(name.replace('<', '').replace('@', '').replace('>', ''))
+        member = await guild.fetch_member(id)
+        if member.nick is not None and member.nick != 'None':
+            return str(member.nick)
+        return await self.ReadUser(bot, name, guild)
 
     # read individual name (discord ID) as discord username
     async def ReadUser(self, bot, name: str, guild):
