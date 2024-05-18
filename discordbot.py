@@ -6,8 +6,6 @@ import time as regular_time
 from classes.gamestate import GameState, GameStateEncoder
 from discord import app_commands
 
-
-
 # Configure Discord bot
 class bot_client(discord.Client):
     def __init__(self):
@@ -210,112 +208,110 @@ async def talk(interaction, channel: str, message: str):
     else:
         print('Non admin is using secret command, ignoring')
 
+# on message sent to channel
+@bot.event
+async def on_message(ctx):
+    global state, game_images
 
-# # on message sent to channel
-# @bot.event
-# async def on_message(ctx):
-#     global state, game_images
+    if ctx.author == bot.user:
+        return
 
-#     if ctx.author == bot.user:
-#         return
+    if(ctx.channel.type == discord.ChannelType.private):
+        await ctx.channel.send(f"Why are you DM-ing me {ctx.author.mention}? ya weirdo.")
+        await ctx.channel.send("Play games with me in your discord channel, check out the readme at https://github.com/chrisbrasington/discord-game-turn-bot")
+        print(f"{ctx.author.mention} send a dm, replying and ignoring")
+        return
 
-#     if(ctx.channel.type == discord.ChannelType.private):
-#         await ctx.channel.send(f"Why are you DM-ing me {ctx.author.mention}? ya weirdo.")
-#         await ctx.channel.send("Play games with me in your discord channel, check out the readme at https://github.com/chrisbrasington/discord-game-turn-bot")
-#         print(f"{ctx.author.mention} send a dm, replying and ignoring")
-#         return
+    # might be missing due to game state loading
+    if(state.mapping == {}):
+        print('Reading all users first time')
+        await ctx.channel.send('Reading usernames first time... one moment please...')
 
-#     # might be missing due to game state loading
-#     if(state.mapping == {}):
-#         print('Reading all users first time')
-#         await ctx.channel.send('Reading usernames first time... one moment please...')
-
-#         await state.ReadAllUsers(bot, ctx.guild)
+        await state.ReadAllUsers(bot, ctx.guild)
     
-#     image_responding_channel = str(ctx.channel) == state.channel
+    image_responding_channel = str(ctx.channel) == state.channel
 
-#     # Use a regular expression to remove any Discord ID from ctx.content.
-#     message_text = re.sub(r"<@\d+>\s*", "", ctx.content)
-#     message_text = message_text.lower()
+    # Use a regular expression to remove any Discord ID from ctx.content.
+    message_text = re.sub(r"<@\d+>\s*", "", ctx.content)
+    message_text = message_text.lower()
     
-#     # print(f"{ctx.author.mention} sent {message_text}")
-#     # print(image_responding_channel)
-#     # await print_simple(message)
+    # print(f"{ctx.author.mention} sent {message_text}")
+    # print(image_responding_channel)
+    # await print_simple(message)
 
-#     # message intended for bot
-#     try:
-#         if bot.user in ctx.mentions:
-#             print("Message intended for bot")
-#             if '/secret/' not in message_text:
-#                 print(f"Mentioned: {state.mapping[ctx.author.mention]} sent {message_text}")
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
+    # message intended for bot
+    try:
+        if bot.user in ctx.mentions:
+            print("Message intended for bot")
+            if '/secret/' not in message_text:
+                print(f"Mentioned: {state.mapping[ctx.author.mention]} sent {message_text}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-#     # bot was mentioned
-#     if bot.user in ctx.mentions:
-#         # ignore commands
-#         if not message_text.startswith('/'):
-#             # respond to hello
-#             if ("hello" in message_text or "hi" in message_text):
-#                 # Construct the response ctx.
-#                 response = f"Hello {ctx.author.mention}! How are you doing?"
-#                 await ctx.channel.send(response)
-#             elif("thank" in message_text):
-#                 await ctx.channel.send(f"You're welcome {ctx.author.mention}.")
-#             elif("right" in message_text):
-#                 await ctx.channel.send(f"Fuck yeah {ctx.author.mention}")
-#             elif("why" in message_text or "what" in message_text):
-#                 await ctx.channel.send("Sorry.. go ask chat.openai")
-#             elif("nice moves" in message_text or "dance" in message_text):
-#                 await ctx.channel.send("♪┏(・o・)┛♪┗ ( ・o・) ┓♪")
-#             elif("config" in message_text):
-#                 await state.DisplayConfig(ctx, bot, game_images)
-#             else:
-#                 await ctx.channel.send(f"{message_text}, you too {ctx.author.mention}.")
+    # bot was mentioned
+    if bot.user in ctx.mentions:
+        # ignore commands
+        if not message_text.startswith('/'):
+            # respond to hello
+            if ("hello" in message_text or "hi" in message_text):
+                # Construct the response ctx.
+                response = f"Hello {ctx.author.mention}! How are you doing?"
+                await ctx.channel.send(response)
+            elif("thank" in message_text):
+                await ctx.channel.send(f"You're welcome {ctx.author.mention}.")
+            elif("right" in message_text):
+                await ctx.channel.send(f"Fuck yeah {ctx.author.mention}")
+            elif("why" in message_text or "what" in message_text):
+                await ctx.channel.send("Sorry.. go ask chat.openai")
+            elif("nice moves" in message_text or "dance" in message_text):
+                await ctx.channel.send("♪┏(・o・)┛♪┗ ( ・o・) ┓♪")
+            elif("config" in message_text):
+                await state.DisplayConfig(ctx, bot, game_images)
+            else:
+                await ctx.channel.send(f"{message_text}, you too {ctx.author.mention}.")
 
-#     # if active player responding
-#     if len(state.players) > 0:
-#         if(image_responding_channel and str(ctx.author.id) in state.players[state.index]):
-#             # print("Active player is responding")
-#             containsImage = False
+    # if active player responding
+    if len(state.players) > 0:
+        if(image_responding_channel and str(ctx.author.id) in state.players[state.index]):
+            # print("Active player is responding")
+            containsImage = False
 
-#             # image detection
-#             if ctx.attachments:
+            # image detection
+            if ctx.attachments:
 
-#                 attachment_url = ctx.attachments[0].url
+                attachment_url = ctx.attachments[0].url
 
-#                 name = ctx.author.name
+                name = ctx.author.name
 
-#                 if ctx.author.nick is not None and ctx.author.nick != 'None':
-#                     name = ctx.author.nick
+                if ctx.author.nick is not None and ctx.author.nick != 'None':
+                    name = ctx.author.nick
 
-#                 game_images.append((name, attachment_url))
+                game_images.append((name, attachment_url))
 
-#                 print('recorded progress: ')
-#                 print(game_images)
+                print('recorded progress: ')
+                print(game_images)
      
-#                 for attachment in ctx.attachments:
-#                     # if attachment.is_image:
-#                     if attachment.filename.endswith((".png", ".jpg", ".gif", ".webp")):
-#                         print("Progressing game")
-#                         containsImage = True
+                for attachment in ctx.attachments:
+                    # if attachment.is_image:
+                    if attachment.filename.endswith((".png", ".jpg", ".gif", ".webp")):
+                        print("Progressing game")
+                        containsImage = True
 
-#                         # progress
-#                         if(state.index == len(state.players)-1):
-#                             await state.End(ctx, bot, game_images)
-#                             game_images = []
-#                             break
-#                         else:
-#                             await state.Next(ctx, bot, game_images)
-#                             break
-#             # do not progress
-#             if not containsImage:
-#                 print("Active player is chatting")
+                        # progress
+                        if(state.index == len(state.players)-1):
+                            await state.End(ctx, bot, game_images)
+                            game_images = []
+                            break
+                        else:
+                            await state.Next(ctx, bot, game_images)
+                            break
+            # do not progress
+            if not containsImage:
+                print("Active player is chatting")
 
-#     if ctx.content.startswith('/'):
-#         if not ctx.content.startswith('/secret'):
-#             print(f"{ctx.author} sent {message_text}")
-#         await bot.process_commands(ctx)
-
+    if ctx.content.startswith('/'):
+        if not ctx.content.startswith('/secret'):
+            print(f"{ctx.author} sent {message_text}")
+        await bot.process_commands(ctx)
 
 bot.run(bot_token)
