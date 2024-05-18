@@ -128,6 +128,20 @@ async def add(interaction, name: str):
         else:
             await interaction.response.send_message(f'{user_alias if user_alias else "Player"} is already in the game.')
 
+@tree.command(guild=guild, description="Removes player from game")
+async def remove(interaction, name: str):
+    global bot, state, game_images, guild
+    if(not is_listening(interaction)):
+        return
+    
+    actual_guild = bot.get_guild(guild.id)
+
+    if await state.Remove(name):
+        await interaction.response.send_message(f"Removed {name}")
+    else:
+        await interaction.response.send_message(f"{name} not found")
+
+
 @tree.command(guild=guild, description="Shuffles and starts new game")
 async def begin(interaction):
     if(not is_listening(interaction)):
@@ -154,13 +168,6 @@ async def skip(interaction):
     await state.Next(interaction, bot, game_images)
 
 
-# # command next/skip
-# @bot.command(brief="Optionally progress to next player.",aliases=["skip"])
-# async def next(ctx):
-#     if(not is_listening(ctx)):
-#         return
-#     global state, game_images
-#     await state.Next(ctx, bot, game_images)
 
 # # on message sent to channel
 # @bot.event
