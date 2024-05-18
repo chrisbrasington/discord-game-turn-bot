@@ -28,12 +28,23 @@ class bot_client(discord.Client):
             print(f'Syncing commands to {guild.name}...')
 
             await tree.sync(guild=guild)
-            commands = await tree.fetch_commands(guild=guild)
 
-            for command in commands:
-                print(f'Command: {command.name}')
+        print('Reading usernames...')
+        await state.ReadAllUsers(bot, guild)
 
-            print('Ready')
+        if(state.active):
+            print(f'Ready. Current player ({state.index}): {state.mapping[state.players[state.index]]} {state.players[state.index]}')
+            await state.Status_Listening(bot, state.players[state.index])
+        else:
+            print('Ready, no game active')
+            await state.Status_Watching(bot, "for /begin")
+
+        commands = await tree.fetch_commands(guild=guild)
+
+        for command in commands:
+            print(f'Command: {command.name}')
+
+        print('Ready')
 
 async def setup():
     global bot, tree, guild, bot_token, state, admin_id
@@ -95,45 +106,6 @@ async def listen(interaction):
     print(f"/listen {state.channel}")
     await interaction.response.send_message(f"Now is_listening on {interaction.channel}")
     await state.Save()
-
-# # initialize players file read
-# async def init():
-#     global bot, state
-#     state = GameState()
-
-#     if os.path.exists('gamestate.json'):
-#         with open('gamestate.json', 'r') as f:
-#             data = json.load(f)
-#             state = GameState(**data)
-#             print('Prior State Loaded from file')
-#     else:
-#         print('No prior state')
-
-
-#     print(await state.Serialize())
-
-# # on bot ready, read usernames
-# @bot.event
-# async def on_ready():
-#     global bot, state, guild_id
-
-#     print(f'Logged in as {bot.user.name} ({bot.user.id})')
-#     # using guild..
-#     print(f'Using guild {guild_id}')
-
-#     guild = bot.get_guild(guild_id)
-
-#     print('Reading usernames...')
-#     await state.ReadAllUsers(bot, guild)
-
-#     if(state.active):
-#         print(f'Ready. Current player ({state.index}): {state.mapping[state.players[state.index]]} {state.players[state.index]}')
-#         await state.Status_Listening(bot, state.players[state.index])
-#     else:
-#         print('Ready, no game active')
-#         await state.Status_Watching(bot, "for /begin")
-
-#     print(f'Alarm is {state.alarm_hours}')
 
 # # command add player
 # @bot.command(brief="Adds player to game. If game is active, goes to end of list")
