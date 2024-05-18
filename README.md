@@ -58,8 +58,12 @@ This is a Discord bot written in Python. It uses the `discord.py` library to int
 
 ```bash
 docker build -t ai-telephone-bot .
-docker run -d -t --name ai-telephone-bot ai-telephone-bot:latest
+docker run -d -t --name ai-telephone-bot --restart always ai-telephone-bot:latest
 docker logs -f ai-telephone-bot
+```
+
+```bash
+docker exec -it ai-telephone-bot /bin/bash
 ```
 
 If you have any questions or need further assistance, feel free to ask!
