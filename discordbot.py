@@ -318,42 +318,4 @@ async def talk(interaction, channel: str, message: str):
 #         await bot.process_commands(ctx)
 
 
-# @bot.command()
-# async def secret(ctx):
-#     global admin_id, bot, guild_id, state
-#     # print(ctx.message)
-#     # print(ctx.message.content)
-#     guild = bot.get_guild(guild_id)
-#     # print(guild.name)
-#     # channel = bot.get_channel(state.channel)
-#     # print(channel.name)
-
-#     if ctx.author.id == admin_id:
-#         print('Neurons firing..')
-
-#         pattern = r"<#(\d+)>"
-#         regex = re.compile(pattern)
-#         match = regex.search(ctx.message.content)
-
-#         if match:
-#             channel_match = int(match.group(1))        
-#             channel = guild.get_channel(channel_match)
-
-#             if channel is not None:
-#                 sending_message_text = ctx.message.content.split(f'{channel_match}>')[1].strip()
-#                 print(f'{channel.name}: {sending_message_text}')
-
-#                 await channel.send(sending_message_text)
-
-#                 if ctx.message.attachments:
-#                     print('sending attachments')
-#                     for attachment in ctx.message.attachments:
-#                         await channel.send(attachment.url)
-#             else:
-#                 print('channel not found')
-
-#     else:
-#         print('Non admin is using secret command, ignoring')
-
-
 bot.run(bot_token)
