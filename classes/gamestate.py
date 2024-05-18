@@ -173,8 +173,15 @@ class GameState:
     # display configuration of active game state
     async def DisplayConfig(self, ctx, bot, game_images):
 
-        # todo: fix this
-        guild_id = 270032432747642881
+        guild_id = 0
+
+        if os.path.exists('../config.json'):
+            with open('../config.json', 'r') as f:
+                data = json.load(f)
+                guild_id = data['guild_id']
+
+        # print guild
+        print(f'Guild ID: {guild_id}')
 
         print(await self.Serialize())
 

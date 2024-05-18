@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import asyncio, discord, json, os, random, re, signal
+import asyncio, discord, json, os, random, re, signal, sys
 from discord.ext import commands
 from datetime import datetime, time
 import time as regular_time
@@ -8,8 +8,15 @@ from classes.gamestate import GameState, GameStateEncoder
 # game state
 state = None
 
-guild_id = 270032432747642881
-admin_id = 368101591540039680
+guild_id = 0
+admin_id = 0
+
+if os.path.exists('config.json'):
+        with open('config.json', 'r') as f:
+            data = json.load(f)
+            guild_id = data['guild_id']
+            admin_id = data['admin_id']
+            print(data)
 
 game_images = []
 
@@ -47,6 +54,10 @@ async def init():
 @bot.event
 async def on_ready():
     global bot, state, guild_id
+
+    print(f'Logged in as {bot.user.name} ({bot.user.id})')
+    # using guild..
+    print(f'Using guild {guild_id}')
 
     guild = bot.get_guild(guild_id)
 
