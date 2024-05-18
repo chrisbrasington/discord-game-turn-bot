@@ -129,43 +129,24 @@ async def add(interaction, name: str):
         else:
             await interaction.response.send_message(f'{user_alias if user_alias else "Player"} is already in the game.')
 
-# # command add player
-# @bot.command(brief="Adds player to game. If game is active, goes to end of list")
-# async def add(ctx, names: str):
-#     global bot, state, game_images
-#     if(not is_listening(ctx)):
-#         return
+@tree.command(guild=guild, description="Shuffles and starts new game")
+async def begin(interaction):
+    if(not is_listening(interaction)):
+        return
+    global state, game_images
+    # reset game images in memory
+    game_images = []
+    await state.Begin(interaction, bot)
 
-#     name_check = names.replace('<','').replace('>','').replace('@','')
-#     if name_check == str(bot.user.id):
-#         await ctx.channel.send("No thanks, I run the game. I'm not smart enough to play it... yet.\n\nAlso what's with you and testing edge-cases?")
-#     else:
-#         guild = bot.get_guild(guild_id)
-#         if await state.Add(bot, names, guild):
-#             await ctx.channel.send("Added Player")
-#             await state.DisplayConfig(ctx, bot, game_images)
-#         else:
-#             await ctx.channel.send('Player already in game')
 
-# # set alarm
-# @bot.command(brief="Set player alarm in hours")
-# async def alarm(ctx, new_alarm: str):
-#     global state
-#     number = int(new_alarm)
+@tree.command(guild=guild, description="End game")
+async def end(interaction):
+    if(not is_listening(interaction)):
+        return
+    global state, game_images
+    await state.End(interaction, bot, game_images)
+    game_images = []
 
-#     if number > 8:
-#         await ctx.channel.send("Yeah let's not go bigger than 8 hours. You can send 0 to disable")
-#         return
-
-#     if number == 0:
-#         await ctx.channel.send("Disabling alarm")
-#         state.alarm_hours = 0
-#     else:
-#         await ctx.channel.send(f"Setting alarm to {number} hour(s)")
-#         state.alarm_hours = number
-
-#         if state.active: 
-#             await ctx.channel.send(f"Congrats {ctx.author.mention}, you hit an edge case of changing the alarm mid-game. I will not start a new alarm until the next player in the game..")
 
 # # command being
 # @bot.command(brief="Shuffles and starts new game",aliases=["go", "start", "random", "randomize"])
@@ -176,12 +157,6 @@ async def add(interaction, name: str):
 #     # reset game images in memory
 #     game_images = []
 #     await state.Begin(ctx, bot)
-
-# # command test
-# @bot.command(brief="Shows configuration of bot")
-# async def config(ctx):
-#     global state, game_images
-#     await state.DisplayConfig(ctx, bot, game_images)
 
 # # command end
 # @bot.command(brief="End game")
