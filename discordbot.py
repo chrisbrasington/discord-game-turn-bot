@@ -80,7 +80,6 @@ async def setup():
                 guild_id = data['guild_id']
                 admin_id = data['admin_id']
                 bot_token = data['bot_token']
-                print(data)
 
     guild = discord.Object(id=guild_id)
 
@@ -106,6 +105,29 @@ async def listen(interaction):
     print(f"/listen {state.channel}")
     await interaction.response.send_message(f"Now is_listening on {interaction.channel}")
     await state.Save()
+
+@tree.command(guild=guild, description="Adds player to game. If game is active, goes to end of list")
+async def add(interaction, name: str):
+    global bot, state, game_images, guild
+    if(not is_listening(interaction)):
+        return
+    
+    print('!!!!!!!!!!!!!')
+    actual_guild = bot.get_guild(guild.id)
+    print(actual_guild)
+
+    name_check = name.replace('<','').replace('>','').replace('@','')
+    if name_check == str(bot.user.id):
+        await interaction.response.send_message("No thanks, I run the game. I'm not smart enough to play it... yet.")
+    else:
+        user_alias = await state.GetAlias(bot, name, actual_guild)  
+        print('~~')
+        print(user_alias)
+        if await state.Add(bot, name, guild):
+            await interaction.response.send_message(f"Added {user_alias if user_alias else 'Player'} to the game.")
+            await state.DisplayConfig(interaction, bot, game_images)
+        else:
+            await interaction.response.send_message(f'{user_alias if user_alias else "Player"} is already in the game.')
 
 # # command add player
 # @bot.command(brief="Adds player to game. If game is active, goes to end of list")

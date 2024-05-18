@@ -326,6 +326,13 @@ class GameState:
         for name in self.names:
             await self.ReadUser(bot, name, guild)
 
+    async def GetAlias(self, bot, name: str, guild):
+        id = int(name.replace('<', '').replace('@', '').replace('>', ''))
+        member = await guild.fetch_member(id)
+        if member.nick is not None and member.nick != 'None':
+            return str(member.nick)
+        return await self.ReadUser(bot, name, guild)
+
     # read individual name (discord ID) as discord username
     async def ReadUser(self, bot, name: str, guild):
 
