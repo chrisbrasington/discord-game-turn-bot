@@ -103,17 +103,6 @@ class GameState:
             await ctx.channel.send(output)
             return
 
-        alarm_text = 'Alarm is disabled'
-        if self.alarm_hours > 0 :
-            # set alarm reminder for active player
-            alarm_text = f"setting alarm to {self.alarm_hours} hour(s)"
-            print(alarm_text)
-            signal.signal(signal.SIGALRM, lambda signum, frame: 
-                asyncio.create_task(self.AlarmAlert(ctx, signal))
-            )
-            print(f'alarming in {self.alarm_hours} hour(s)')
-            signal.alarm(self.alarm_hours*self.SECONDS_PER_HOUR)
-
         # no players to start
         if(len(self.players) == 0):
             await ctx.channel.send("Add players first with /add @\{name\} command")

@@ -147,6 +147,7 @@ async def begin(interaction):
     global state, game_images
     # reset game images in memory
     game_images = []
+    await interaction.response.send_message("Starting new game")
     await state.Begin(interaction, bot)
 
 
@@ -155,6 +156,7 @@ async def end(interaction):
     if(not is_listening(interaction)):
         return
     global state, game_images
+    await interaction.response.send_message("Ending game")
     await state.End(interaction, bot, game_images)
     game_images = []
 
@@ -163,11 +165,13 @@ async def skip(interaction):
     if(not is_listening(interaction)):
         return
     global state, game_images
+    await interaction.response.send_message("Skipping player")
     await state.Next(interaction, bot, game_images)
 
 @tree.command(guild=guild, description="Prints current game status", name="print")
 async def print_game(interaction):
     global state
+    await interaction.response.send_message("Current game:")
     await state.Display(interaction)
 
 @tree.command(guild=guild, description="Toggles if @ messaging is used during turns")
@@ -180,6 +184,7 @@ async def silent(interaction):
 @tree.command(guild=guild, description="Shows configuration of bot")
 async def config(interaction):
     global state, game_images
+    await interaction.response.send_message("Current configuration")
     await state.DisplayConfig(interaction, bot, game_images)
 
 @tree.command(guild=guild, description="No you can't run this")
