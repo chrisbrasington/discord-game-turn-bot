@@ -12,11 +12,11 @@ At the end of the game, all images are displayed in order, revealing how the ori
 
 The game progresses as follows:
 
-1. Players are added to the game using the `/add` command, followed by a list of player names separated by commas. The player list is saved to a file, and the updated list is printed.
+1. The game is started using the `/begin` command, which shuffles the player list and prints the first player.
 
-2. The game is started using the `/begin` command, which shuffles the player list and prints the first player.
+2. The current player will simply post an image to the channel and the ai-telephone-bot will auto-detect the players turn. Only one image is required but players are encouraged to put in the prompt with spoiler tags and post a spoiler tagged 2nd image of all images returned from the ai-generation.
 
-3. If the current player is the last player in the list, a message is sent indicating that the game has ended.
+3. When the current player is the last player in the list, a message is sent indicating that the game has ended.
 
 ## Commands
 ## Commands
