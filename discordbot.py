@@ -35,13 +35,29 @@ class bot_client(discord.Client):
 
             print('Ready')
 
-def setup():
-    global bot, tree, state
+async def setup():
+    global bot, tree, guild, bot_token, state, admin_id
 
     bot = bot_client()
     tree = app_commands.CommandTree(bot)
 
-    state = None
+    state = GameState()
+
+    if os.path.exists('gamestate.json'):
+        with open('gamestate.json', 'r') as f:
+            data = json.load(f)
+            state = GameState(**data)
+            print('Prior State Loaded from file')
+    else:
+        print('No prior state')
+
+    # print seralized state
+    print(await state.Serialize())
+
+    if state.channel is None:
+        print("Not is_listening on any channel")
+    else:
+        print(f"is_listening on {state.channel}")
 
     guild_id = 0
     admin_id = 0
@@ -57,10 +73,11 @@ def setup():
 
     guild = discord.Object(id=guild_id)
 
-    return bot, tree, guild, bot_token, state, admin_id
+    # return bot, tree, guild, bot_token, state, admin_id
 
 game_images = []
-bot, tree, guild, token, state, admin_id = setup()
+# bot, tree, guild, token, state, admin_id = setup()
+asyncio.run(setup())
 
 @tree.command(guild=guild, description='dance')
 async def dance(interaction):
@@ -70,6 +87,14 @@ async def dance(interaction):
 def is_listening(ctx):
     global state
     return str(ctx.channel) == state.channel
+
+@tree.command(guild=guild, description='Set listening to this channel')
+async def listen(interaction):
+    global state
+    state.channel = str(interaction.channel)
+    print(f"/listen {state.channel}")
+    await interaction.response.send_message(f"Now is_listening on {interaction.channel}")
+    await state.Save()
 
 # # initialize players file read
 # async def init():
@@ -84,10 +109,7 @@ def is_listening(ctx):
 #     else:
 #         print('No prior state')
 
-#     if state.channel is None:
-#         print("Not is_listening on any channel")
-#     else:
-#         print(f"is_listening on {state.channel}")
+
 #     print(await state.Serialize())
 
 # # on bot ready, read usernames
@@ -184,10 +206,6 @@ def is_listening(ctx):
 #     await state.ReadAllUsers(bot, ctx.guild)
 #     await state.DisplayConfig(ctx, bot, game_images)
 
-# # command hello
-# @bot.command(brief="Hello, World")
-# async def hello(ctx):
-#     await ctx.send("Hello, world!")
 
 # # command listen - sets game channel
 # @bot.command(brief="Set listening to this channel")
@@ -389,4 +407,4 @@ def is_listening(ctx):
 #     await state.Save()
 
 
-bot.run(token)
+bot.run(bot_token)
