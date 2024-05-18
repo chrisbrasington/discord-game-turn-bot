@@ -177,6 +177,11 @@ async def silent(interaction):
     await interaction.response.send_message(f"Silent: {state.silent}")
     await state.Save()
 
+@tree.command(guild=guild, description="Shows configuration of bot")
+async def config(interaction):
+    global state, game_images
+    await state.DisplayConfig(interaction, bot, game_images)
+
 @tree.command(guild=guild, description="No you can't run this")
 async def talk(interaction, channel: str, message: str):
     global admin_id, bot, guild, state
