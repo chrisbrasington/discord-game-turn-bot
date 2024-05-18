@@ -167,6 +167,48 @@ async def skip(interaction):
     global state, game_images
     await state.Next(interaction, bot, game_images)
 
+@tree.command(guild=guild, description="Prints current game status", name="print")
+async def print_game(interaction):
+    global state
+    await state.Display(interaction)
+
+@tree.command(guild=guild, description="Toggles if @ messaging is used during turns")
+async def silent(interaction):
+    global state
+    state.silent = not state.silent
+    await interaction.response.send_message(f"Silent: {state.silent}")
+    await state.Save()
+
+@tree.command(guild=guild, description="No you can't run this")
+async def talk(interaction, channel: str, message: str):
+    global admin_id, bot, guild, state
+    
+    actual_guild = bot.get_guild(guild.id)
+
+    if interaction.user.id == admin_id:
+        print('Neurons firing..')
+
+        channel_id = int(channel.replace('<#','').replace('>',''))
+
+        print(channel_id)
+    
+        channel = actual_guild.get_channel(channel_id)
+
+        if channel is not None:
+            sending_message_text = message
+            print(f'{channel.name}: {sending_message_text}')
+
+            await channel.send(sending_message_text)
+
+            # if interaction.message.attachments:
+            #     print('sending attachments')
+            #     for attachment in interaction.message.attachments:
+            #         await channel.send(attachment.url)
+        else:
+            print('channel not found')
+
+    else:
+        print('Non admin is using secret command, ignoring')
 
 
 # # on message sent to channel
@@ -275,35 +317,6 @@ async def skip(interaction):
 #             print(f"{ctx.author} sent {message_text}")
 #         await bot.process_commands(ctx)
 
-# # command print, status
-# @bot.command(brief="Prints current game status",name="print", aliases=["status", "who"])
-# async def print_game(ctx):
-#     # if(not is_listening(ctx)):
-#     #     return
-#     global state
-#     await state.Display(ctx)
-
-# # command removes a player from the game
-# @bot.command(brief="Removes player from game")
-# async def remove(ctx, name: str):
-#     if(not is_listening(ctx)):
-#         return
-#     global state, game_images
-
-#     if await state.Remove(name):
-#         await ctx.channel.send(f"Removed {name}")
-#         await state.DisplayConfig(ctx, bot, game_images)
-#     else:
-#         await ctx.channel.send(f"{name} not found")
-
-# # command restart - can unload test to real players
-# @bot.command(brief="Resets players (used for swapping out of test mode)")
-# async def restart (ctx):
-#     global state, game_images
-#     await state.Restart(bot)
-
-#     await ctx.channel.send("Restarted")
-#     await state.DisplayConfig(ctx, bot, game_images)
 
 # @bot.command()
 # async def secret(ctx):
@@ -341,15 +354,6 @@ async def skip(interaction):
 
 #     else:
 #         print('Non admin is using secret command, ignoring')
-
-
-# # command silent - toggle @ curring player
-# @bot.command(brief="Toggles if @ messaging is used during turns")
-# async def silent(ctx):
-#     global state
-#     state.silent = not state.silent
-#     await ctx.channel.send(f"Silent: {state.silent}")
-#     await state.Save()
 
 
 bot.run(bot_token)
