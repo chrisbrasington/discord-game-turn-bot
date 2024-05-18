@@ -18,7 +18,9 @@ The game progresses as follows:
 
 3. When the current player is the last player in the list, a message is sent indicating that the game has ended.
 
-## Commands
+![](.img/play1.png)
+![](.img/play2.png)
+
 ## Commands
 
 - `/add <name>`: Adds a player to the game. If the game is active, the player is added to the end of the list.
