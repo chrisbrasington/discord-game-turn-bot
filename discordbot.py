@@ -112,9 +112,8 @@ async def add(interaction, name: str):
     if(not is_listening(interaction)):
         return
     
-    print('!!!!!!!!!!!!!')
     actual_guild = bot.get_guild(guild.id)
-    print(actual_guild)
+    # print(actual_guild)
 
     name_check = name.replace('<','').replace('>','').replace('@','')
     if name_check == str(bot.user.id):
@@ -123,9 +122,9 @@ async def add(interaction, name: str):
         user_alias = await state.GetAlias(bot, name, actual_guild)  
         print('~~')
         print(user_alias)
-        if await state.Add(bot, name, guild):
+        if await state.Add(bot, name, actual_guild):
             await interaction.response.send_message(f"Added {user_alias if user_alias else 'Player'} to the game.")
-            await state.DisplayConfig(interaction, bot, game_images)
+            # await state.DisplayConfig(interaction, bot, game_images)
         else:
             await interaction.response.send_message(f'{user_alias if user_alias else "Player"} is already in the game.')
 
@@ -147,43 +146,13 @@ async def end(interaction):
     await state.End(interaction, bot, game_images)
     game_images = []
 
+@tree.command(guild=guild, description="Optionally skip over the current player.")
+async def skip(interaction):
+    if(not is_listening(interaction)):
+        return
+    global state, game_images
+    await state.Next(interaction, bot, game_images)
 
-# # command being
-# @bot.command(brief="Shuffles and starts new game",aliases=["go", "start", "random", "randomize"])
-# async def begin(ctx):
-#     if(not is_listening(ctx)):
-#         return
-#     global state, game_images
-#     # reset game images in memory
-#     game_images = []
-#     await state.Begin(ctx, bot)
-
-# # command end
-# @bot.command(brief="End game")
-# async def end(ctx):
-#     if(not is_listening(ctx)):
-#         return
-#     global state, game_images
-#     await state.End(ctx, bot, game_images)
-#     game_images = []
-
-# # command test - sets players to test players
-# @bot.command(brief="aka /goblinmode - swaps players for test goblins",name="gametest", aliases=["testmode", "goblinmode"])
-# async def gametest(ctx):
-#     global state, game_images
-#     await state.TestMode(True, bot)
-#     await state.ReadAllUsers(bot, ctx.guild)
-#     await state.DisplayConfig(ctx, bot, game_images)
-
-
-# # command listen - sets game channel
-# @bot.command(brief="Set listening to this channel")
-# async def listen(ctx):
-#     global state
-#     state.channel = str(ctx.channel)
-#     print(f"/listen {state.channel}")
-#     await ctx.channel.send(f"Now is_listening on {ctx.channel}")
-#     await state.Save()
 
 # # command next/skip
 # @bot.command(brief="Optionally progress to next player.",aliases=["skip"])
