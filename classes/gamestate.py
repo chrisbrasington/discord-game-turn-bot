@@ -162,17 +162,7 @@ class GameState:
         await ctx.channel.send(output, embed=message)
 
     # display configuration of active game state
-    async def DisplayConfig(self, ctx, bot, game_images):
-
-        guild_id = 0
-
-        if os.path.exists('../config.json'):
-            with open('../config.json', 'r') as f:
-                data = json.load(f)
-                guild_id = data['guild_id']
-
-        # print guild
-        print(f'Guild ID: {guild_id}')
+    async def DisplayConfig(self, ctx, bot, guild, game_images):
 
         print(await self.Serialize())
 
@@ -194,12 +184,12 @@ class GameState:
 
         await ctx.channel.send(output)
 
-        guild = bot.get_guild(guild_id)
+        actual_guild = bot.get_guild(guild.id)
 
         if self.mapping == {}:
             await ctx.channel.send('Reading usernames into cache... one moment please...')
             for name in self.names:
-                await self.ReadUser(bot, name, guild)
+                await self.ReadUser(bot, name, actual_guild)
 
         await ctx.channel.send(f'Known players: {await self.PrintSimple(True)}')
         await ctx.channel.send(f'Game order: {await self.PrintSimple(False)}')
@@ -209,7 +199,7 @@ class GameState:
         for user in self.mapping:
 
             id = int(user.replace('<', '').replace('@', '').replace('>', ''))
-            member = await guild.fetch_member(id)
+            member = await actual_guild.fetch_member(id)
 
             if member.nick is None or member.nick == 'None':
                 temp_alias.append(member.name)

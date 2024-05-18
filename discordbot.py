@@ -185,7 +185,7 @@ async def silent(interaction):
 async def config(interaction):
     global state, game_images
     await interaction.response.send_message("Current configuration")
-    await state.DisplayConfig(interaction, bot, game_images)
+    await state.DisplayConfig(interaction, bot, guild, game_images)
 
 @tree.command(guild=guild, description="No you can't run this")
 async def talk(interaction, channel: str, message: str):
