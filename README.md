@@ -18,7 +18,10 @@ The game progresses as follows:
 
 3. When the current player is the last player in the list, a message is sent indicating that the game has ended.
 
+### Screenshot showing automatic game progression:
 ![](.img/play1.png)
+
+### Screenshot showing end of game
 ![](.img/play2.png)
 
 ## Commands
