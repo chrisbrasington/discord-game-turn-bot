@@ -5,3 +5,4 @@
 *.backup
 myenv
 dev
+*.geddy

@@ -151,14 +151,14 @@ async def begin(interaction):
     await state.Begin(interaction, bot)
 
 
-@tree.command(guild=guild, description="End game")
-async def end(interaction):
-    if(not is_listening(interaction)):
-        return
-    global state, game_images
-    await interaction.response.send_message("Ending game")
-    await state.End(interaction, bot, game_images)
-    game_images = []
+# @tree.command(guild=guild, description="End game")
+# async def end(interaction):
+#     if(not is_listening(interaction)):
+#         return
+#     global state, game_images
+#     await interaction.response.send_message("Ending game")
+#     await state.End(interaction, bot, game_images)
+#     game_images = []
 
 @tree.command(guild=guild, description="Optionally skip over the current player.")
 async def skip(interaction):
