@@ -1,0 +1,19 @@
+# stop docker
+echo 'stopping docker ai-telephone-bot'
+docker stop ai-telephone-bot
+
+# rm docker
+echo 'removing ai-telephone-bot'
+docker rm ai-telephone-bot
+
+# rebuild docker file
+echo 'building docker image'
+docker build -t ai-telephone-bot .
+
+# run with an always restart
+echo 'running with restart always, mounted download folder and mounted config folder'
+docker run -e TZ=America/Denver --name ai-telephone-bot --restart always -d ai-telephone-bot:latest
+
+# view logs
+echo 'watching logs with...'
+echo 'docker logs -f ai-telephone-bot'
