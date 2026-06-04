@@ -244,6 +244,8 @@ class GameState:
                 name = entry[0]
                 url = entry[1]
                 await ctx.channel.send(f'{i} - {name} [- link]({url})')
+                if 'cdn.discordapp.com' not in url:
+                    await ctx.channel.send(url)
                 i += 1
 
         game_images = []
