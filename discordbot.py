@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import asyncio, discord, json, os, random, re, signal, sys
+import asyncio, discord, json, os, random, re, signal, sys, io
+import aiohttp
+from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
 from datetime import datetime, time
 import time as regular_time
@@ -185,6 +187,78 @@ async def config(interaction):
     await interaction.response.send_message("Current configuration")
     await state.DisplayConfig(interaction, bot, guild, state.game_images)
     await state.Display(interaction, force_silent=True)
+
+async def _generate_gif(game_images):
+    SIZE = 480
+    HOLD_FRAMES = 5
+    HOLD_MS = 150
+    BLEND_FRAMES = 8
+    BLEND_MS = 60
+
+    def fit(img):
+        img = img.convert("RGBA")
+        canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 255))
+        img.thumbnail((SIZE, SIZE), Image.LANCZOS)
+        x = (SIZE - img.width) // 2
+        y = (SIZE - img.height) // 2
+        canvas.paste(img, (x, y), img)
+        return canvas
+
+    def label(img, name):
+        draw = ImageDraw.Draw(img)
+        try:
+            font = ImageFont.load_default(size=22)
+        except TypeError:
+            font = ImageFont.load_default()
+        pad = 6
+        bbox = draw.textbbox((0, 0), name, font=font)
+        text_h = bbox[3] - bbox[1]
+        bar_top = SIZE - text_h - pad * 2
+        draw.rectangle([(0, bar_top), (SIZE, SIZE)], fill=(0, 0, 0, 180))
+        draw.text((pad, bar_top + pad), name, font=font, fill=(255, 255, 255, 255))
+        return img
+
+    async def download(session, url):
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as r:
+            return await r.read()
+
+    async with aiohttp.ClientSession() as session:
+        raw = await asyncio.gather(*[download(session, url) for _, url in game_images])
+
+    images = [label(fit(Image.open(io.BytesIO(data))), name) for (name, _), data in zip(game_images, raw)]
+
+    frames = []
+    durations = []
+
+    for i, img in enumerate(images):
+        for _ in range(HOLD_FRAMES):
+            frames.append(img.convert("RGB"))
+            durations.append(HOLD_MS)
+        if i < len(images) - 1:
+            nxt = images[i + 1]
+            for f in range(1, BLEND_FRAMES + 1):
+                blended = Image.blend(img, nxt, f / (BLEND_FRAMES + 1))
+                frames.append(blended.convert("RGB"))
+                durations.append(BLEND_MS)
+
+    buf = io.BytesIO()
+    frames[0].save(
+        buf, format="GIF", save_all=True, append_images=frames[1:],
+        duration=durations, loop=0, optimize=False
+    )
+    buf.seek(0)
+    print(f"GIF size: {buf.getbuffer().nbytes / 1024 / 1024:.2f} MB")
+    return buf
+
+@tree.command(guild=guild, description="Generate animated GIF of all recorded game images")
+async def test(interaction):
+    global state
+    if not state.game_images:
+        await interaction.response.send_message("No images recorded yet.", ephemeral=True)
+        return
+    await interaction.response.defer()
+    buf = await _generate_gif(state.game_images)
+    await interaction.followup.send(file=discord.File(buf, filename="telephone.gif"))
 
 @tree.command(guild=guild, description="No you can't run this")
 async def talk(interaction, channel: str, message: str):
