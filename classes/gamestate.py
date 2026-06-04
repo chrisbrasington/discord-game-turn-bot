@@ -1,6 +1,35 @@
 import asyncio, discord, json, os, random, signal
 from datetime import datetime, time
 
+MAX_GIF_BYTES = 8 * 1024 * 1024
+
+async def post_results(channel, game_images, gif_buf):
+    print(f'[post_results] {len(game_images)} entries, gif={"yes" if gif_buf else "no"}')
+    for entry in game_images:
+        name = entry[0]
+        url = entry[1]
+        guess = entry[2] if len(entry) > 2 and entry[2] else ""
+        external = 'cdn.discordapp.com' not in url
+        print(f'[post_results] {name}: guess={bool(guess)} external={external} url={url}')
+        if guess:
+            await channel.send(f"**[{name}]({url})**: {guess}")
+        if external:
+            print(f'[post_results] posting bare url for {name}')
+            await channel.send(url)
+
+    if gif_buf is not None and gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
+        print('[post_results] posting gif')
+        gif_buf.seek(0)
+        await channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
+    else:
+        print('[post_results] no gif / too large — posting individual links')
+        for i, entry in enumerate(game_images, 1):
+            name = entry[0]
+            url = entry[1]
+            await channel.send(f'{i} - {name} [- link]({url})')
+            if 'cdn.discordapp.com' not in url:
+                await channel.send(url)
+
 class GameState:
     game_state_file = 'gamestate.json'
     player_file = 'players.json'
@@ -225,27 +254,7 @@ class GameState:
         else:
             await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}!")
 
-        if gif_buf is not None and gif_buf.getbuffer().nbytes <= 8 * 1024 * 1024:
-            for entry in game_images:
-                name = entry[0]
-                url = entry[1]
-                guess = entry[2] if len(entry) > 2 and entry[2] else ""
-                if guess:
-                    await ctx.channel.send(f"**[{name}]({url})**: {guess}")
-                if 'cdn.discordapp.com' not in url:
-                    await ctx.channel.send(url)
-            gif_buf.seek(0)
-            await ctx.channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
-        else:
-            await ctx.channel.send('Here\'s the result of the game:')
-            i = 1
-            for entry in game_images:
-                name = entry[0]
-                url = entry[1]
-                await ctx.channel.send(f'{i} - {name} [- link]({url})')
-                if 'cdn.discordapp.com' not in url:
-                    await ctx.channel.send(url)
-                i += 1
+        await post_results(ctx.channel, game_images, gif_buf)
 
         game_images = []
 

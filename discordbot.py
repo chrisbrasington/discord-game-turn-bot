@@ -8,7 +8,7 @@ import numpy as np
 from discord.ext import commands
 from datetime import datetime, time
 import time as regular_time
-from classes.gamestate import GameState, GameStateEncoder
+from classes.gamestate import GameState, GameStateEncoder, post_results
 from discord import app_commands
 
 # Configure Discord bot
@@ -445,27 +445,8 @@ async def test(interaction):
         return
     await interaction.response.defer(ephemeral=True)
 
-    gif_task = asyncio.create_task(_make_gif(state.game_images))
-
-    lines = []
-    for entry in state.game_images:
-        name = entry[0]
-        url = entry[1]
-        guess = entry[2] if len(entry) > 2 and entry[2] else ""
-        if guess:
-            lines.append(f"**[{name}]({url})**: {guess}")
-    for line in lines:
-        await interaction.channel.send(line)
-
-    gif_buf = await gif_task
-    if gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
-        gif_buf.seek(0)
-        await interaction.channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
-    else:
-        for i, entry in enumerate(state.game_images, 1):
-            await interaction.channel.send(f'{i} - [{entry[0]}]({entry[1]})')
-            if 'cdn.discordapp.com' not in entry[1]:
-                await interaction.channel.send(entry[1])
+    gif_buf = await _make_gif(state.game_images)
+    await post_results(interaction.channel, state.game_images, gif_buf)
     await interaction.followup.send("done", ephemeral=True)
 
 @tree.command(guild=guild, description="Generate an animated GIF of all recorded game images")
