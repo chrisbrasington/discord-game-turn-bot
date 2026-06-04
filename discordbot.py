@@ -286,35 +286,38 @@ async def on_message(ctx):
             # print("Active player is responding")
             containsImage = False
 
-            # image detection
+            name = ctx.author.name
+            if ctx.author.nick is not None and ctx.author.nick != 'None':
+                name = ctx.author.nick
+
+            image_url = None
+
+            # check file attachments
             if ctx.attachments:
+                for attachment in ctx.attachments:
+                    if attachment.filename.endswith((".png", ".jpg", ".webp")):
+                        image_url = attachment.url
+                        break
 
-                attachment_url = ctx.attachments[0].url
+            # check for a raw image url posted as text
+            if not image_url:
+                url_match = re.search(r'https?://\S+\.(?:png|jpg|webp)(?:\?\S*)?', ctx.content, re.IGNORECASE)
+                if url_match:
+                    image_url = url_match.group(0)
 
-                name = ctx.author.name
-
-                if ctx.author.nick is not None and ctx.author.nick != 'None':
-                    name = ctx.author.nick
-
-                game_images.append((name, attachment_url))
-
+            if image_url:
+                game_images.append((name, image_url))
                 print('recorded progress: ')
                 print(game_images)
-     
-                for attachment in ctx.attachments:
-                    # if attachment.is_image:
-                    if attachment.filename.endswith((".png", ".jpg", ".gif", ".webp")):
-                        print("Progressing game")
-                        containsImage = True
+                print("Progressing game")
+                containsImage = True
 
-                        # progress
-                        if(state.index == len(state.players)-1):
-                            await state.End(ctx, bot, game_images)
-                            game_images = []
-                            break
-                        else:
-                            await state.Next(ctx, bot, game_images)
-                            break
+                if(state.index == len(state.players)-1):
+                    await state.End(ctx, bot, game_images)
+                    game_images = []
+                else:
+                    await state.Next(ctx, bot, game_images)
+
             # do not progress
             if not containsImage:
                 print("Active player is chatting")
