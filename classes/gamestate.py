@@ -12,7 +12,7 @@ class GameState:
     # read players from file if exists
     # reading game state from file should be done by deserization
     # at constructor of GameState object outside of this class
-    def __init__(self, active=False, alarm_hours=0, channel='🤖bot-commands', index=0,
+    def __init__(self, active=False, alarm_hours=0, channel=None, index=0,
         is_test=False, names=[], players=[], silent=False, game_images=[]):
 
         self.active = active
@@ -358,8 +358,9 @@ class GameState:
         player_count = len(self.players)
         player_index = 0
 
-        for player in self.players:
+        for i, player in enumerate(self.players):
             if player == name:
+                player_index = i
                 break
 
         print(f'Player found at index: {player_index}')

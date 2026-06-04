@@ -93,12 +93,12 @@ async def dance(interaction):
 # check if context is the listening channel
 def is_listening(ctx):
     global state
-    return str(ctx.channel) == state.channel
+    return ctx.channel.id == state.channel
 
 @tree.command(guild=guild, description='Set listening to this channel')
 async def listen(interaction):
     global state
-    state.channel = str(interaction.channel)
+    state.channel = interaction.channel.id
     print(f"/listen {state.channel}")
     await interaction.response.send_message(f"Now is_listening on {interaction.channel}")
     await state.Save()
@@ -216,6 +216,53 @@ async def talk(interaction, channel: str, message: str):
     else:
         print('Non admin is using secret command, ignoring')
 
+@tree.command(guild=guild, description="No you can't run this")
+async def delete(interaction, message_id: str):
+    global admin_id, bot
+    if interaction.user.id != admin_id:
+        await interaction.response.send_message("no", ephemeral=True)
+        return
+    try:
+        message = await interaction.channel.fetch_message(int(message_id))
+        if message.author == bot.user:
+            await message.delete()
+            await interaction.response.send_message("Deleted", ephemeral=True)
+        else:
+            await interaction.response.send_message("That's not my message", ephemeral=True)
+    except discord.NotFound:
+        await interaction.response.send_message("Message not found", ephemeral=True)
+
+@tree.command(guild=guild, description="No you can't run this")
+async def accept(interaction, url: str):
+    global admin_id, bot, state
+    if interaction.user.id != admin_id:
+        await interaction.response.send_message("no", ephemeral=True)
+        return
+    if not re.search(r'https?://\S+\.(?:png|jpg|webp)(?:\?\S*)?', url, re.IGNORECASE):
+        await interaction.response.send_message("Not a valid image URL (.png/.jpg/.webp)", ephemeral=True)
+        return
+
+    current = state.players[state.index]
+    member = state.mapping.get(current)
+    if member and hasattr(member, 'nick') and member.nick and member.nick != 'None':
+        name = member.nick
+    elif member and hasattr(member, 'name'):
+        name = member.name
+    else:
+        name = current
+
+    await interaction.response.send_message(f"Image found for {name}: {url}")
+
+    state.game_images.append((name, url))
+    await state.Save()
+
+    if state.index == len(state.players) - 1:
+        await state.End(interaction, bot, state.game_images)
+        state.game_images = []
+        await state.Save()
+    else:
+        await state.Next(interaction, bot, state.game_images)
+
 # on message sent to channel
 @bot.event
 async def on_message(ctx):
@@ -237,7 +284,7 @@ async def on_message(ctx):
 
         await state.ReadAllUsers(bot, ctx.guild)
     
-    image_responding_channel = str(ctx.channel) == state.channel
+    image_responding_channel = ctx.channel.id == state.channel
 
     # Use a regular expression to remove any Discord ID from ctx.content.
     message_text = re.sub(r"<@\d+>\s*", "", ctx.content)
