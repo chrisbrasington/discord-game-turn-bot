@@ -184,6 +184,22 @@ async def silent(interaction):
     await interaction.response.send_message(f"Silent: {state.silent}")
     await state.Save()
 
+_bother_flip = False
+
+@tree.command(guild=guild, description="Bother the active player")
+async def bother(interaction):
+    global state, _bother_flip
+    if not state.active or not state.players:
+        await interaction.response.send_message("No game in progress.", ephemeral=True)
+        return
+    player = state.players[state.index]
+    if _bother_flip:
+        msg = f"{player} bother, bother!"
+    else:
+        msg = f"{player} it's your turn!"
+    _bother_flip = not _bother_flip
+    await interaction.response.send_message(msg)
+
 @tree.command(guild=guild, description="Shows configuration of bot")
 async def config(interaction):
     global state
