@@ -225,8 +225,7 @@ class GameState:
         else:
             await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}!")
 
-        MAX_GIF_BYTES = 8 * 1024 * 1024
-        if gif_buf is not None and gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
+        if gif_buf is not None and gif_buf.getbuffer().nbytes <= 8 * 1024 * 1024:
             lines = []
             for entry in game_images:
                 name = entry[0]

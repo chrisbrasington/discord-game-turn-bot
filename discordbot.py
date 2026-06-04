@@ -199,8 +199,17 @@ async def _send_lines(channel, lines):
     if chunk:
         await channel.send("\n".join(chunk))
 
-async def _generate_gif(game_images):
-    SIZE = 480
+MAX_GIF_BYTES = 8 * 1024 * 1024
+
+async def _make_gif(game_images):
+    buf = await _generate_gif(game_images)
+    if buf.getbuffer().nbytes > MAX_GIF_BYTES:
+        print("GIF too large, retrying at 320px")
+        buf = await _generate_gif(game_images, size=320)
+    return buf
+
+async def _generate_gif(game_images, size=480):
+    SIZE = size
     HOLD_FRAMES = 5
     HOLD_MS = 150
     BLEND_FRAMES = 8
@@ -267,9 +276,9 @@ async def test(interaction):
     if not state.game_images:
         await interaction.response.send_message("No images recorded yet.", ephemeral=True)
         return
-    await interaction.response.send_message("Generating...", ephemeral=True)
+    await interaction.response.defer(ephemeral=True)
 
-    gif_buf = await _generate_gif(state.game_images)
+    gif_task = asyncio.create_task(_make_gif(state.game_images))
 
     lines = []
     for entry in state.game_images:
@@ -281,13 +290,14 @@ async def test(interaction):
     for line in lines:
         await interaction.channel.send(line)
 
-    MAX_GIF_BYTES = 8 * 1024 * 1024
+    gif_buf = await gif_task
     if gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
         gif_buf.seek(0)
         await interaction.channel.send(file=discord.File(gif_buf, filename="telephone.gif"))
     else:
         for i, entry in enumerate(state.game_images, 1):
             await interaction.channel.send(f'{i} - [{entry[0]}]({entry[1]})')
+    await interaction.followup.send("done", ephemeral=True)
 
 @tree.command(guild=guild, description="No you can't run this")
 async def talk(interaction, channel: str, message: str):
@@ -361,7 +371,7 @@ async def accept(interaction, url: str, guess: str = ""):
     await state.Save()
 
     if state.index == len(state.players) - 1:
-        gif_buf = await _generate_gif(state.game_images)
+        gif_buf = await _make_gif(state.game_images)
         await state.End(interaction, bot, state.game_images, gif_buf=gif_buf)
         state.game_images = []
         await state.Save()
@@ -482,7 +492,7 @@ async def on_message(ctx):
                 containsImage = True
 
                 if(state.index == len(state.players)-1):
-                    gif_buf = await _generate_gif(state.game_images)
+                    gif_buf = await _make_gif(state.game_images)
                     await state.End(ctx, bot, state.game_images, gif_buf=gif_buf)
                     state.game_images = []
                     await state.Save()
