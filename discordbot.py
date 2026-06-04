@@ -464,6 +464,8 @@ async def test(interaction):
     else:
         for i, entry in enumerate(state.game_images, 1):
             await interaction.channel.send(f'{i} - [{entry[0]}]({entry[1]})')
+            if 'cdn.discordapp.com' not in entry[1]:
+                await interaction.channel.send(entry[1])
     await interaction.followup.send("done", ephemeral=True)
 
 @tree.command(guild=guild, description="Generate an animated GIF of all recorded game images")
@@ -554,6 +556,8 @@ async def accept(interaction, url: str, guess: str = ""):
         name = current
 
     await interaction.response.send_message(f"Image found for {name}: {url}")
+    if 'cdn.discordapp.com' not in url:
+        await interaction.channel.send(url)
 
     state.game_images.append((name, url, guess))
     await state.Save()
