@@ -1,11 +1,18 @@
 services:
   ai-telephone-bot:
     build: .
-    image: ai-telephone-bot:latest
+    image: valhalla:5000/ai-telephone-bot:latest
     container_name: ai-telephone-bot
     restart: always
+    env_file: .env
+    environment:
+      TZ: America/Denver
+      PYTHONUNBUFFERED: "1"
     volumes:
       - ./gamestate.json:/app/gamestate.json
-    environment:
-      - TZ=America/Denver
-      - PYTHONUNBUFFERED=1
+      - ./players.json:/app/players.json
+    labels:
+      homepage.group: Bots
+      homepage.name: AI Telephone Bot
+      homepage.icon: mdi-phone
+      homepage.description: Discord

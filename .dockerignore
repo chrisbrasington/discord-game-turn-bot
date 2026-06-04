@@ -1,0 +1,7 @@
+.env
+bot_token.txt
+config.json
+__pycache__
+dev
+gamestate.json
+players.json

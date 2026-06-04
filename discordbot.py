@@ -23,10 +23,7 @@ class bot_client(discord.Client):
 
         await self.wait_until_ready()
         if not self.synced:
-            with open("config.json") as config_file:
-                config = json.load(config_file)
-
-            guild = self.get_guild(config['guild_id'])
+            guild = self.get_guild(int(os.environ['GUILD_ID']))
 
             print(f'Syncing commands to {guild.name}...')
 
@@ -73,16 +70,9 @@ async def setup():
     else:
         print(f"is_listening on {state.channel}")
 
-    guild_id = 0
-    admin_id = 0
-    bot_token = ""
-
-    if os.path.exists('config.json'):
-            with open('config.json', 'r') as f:
-                data = json.load(f)
-                guild_id = data['guild_id']
-                admin_id = data['admin_id']
-                bot_token = data['bot_token']
+    guild_id = int(os.environ['GUILD_ID'])
+    admin_id = int(os.environ['ADMIN_ID'])
+    bot_token = os.environ['DISCORD_TOKEN']
 
     guild = discord.Object(id=guild_id)
 
