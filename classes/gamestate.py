@@ -96,7 +96,7 @@ class GameState:
         return start_time < current_time < end_time  
 
     # display overall state of game
-    async def Display(self, ctx):
+    async def Display(self, ctx, force_silent=False):
         print('Printing game...')
         # do not advance to new game here
         if not self.active:
@@ -109,7 +109,7 @@ class GameState:
         if(len(self.players) == 0):
             await ctx.channel.send("Add players first with /add @\{name\} command")
             return
-        
+
         # account for player removal mid-game
         if(self.index > len(self.players)-1):
             self.index = len(self.players)-1
@@ -123,7 +123,7 @@ class GameState:
         avatar = None
 
         # current turn
-        if self.silent:
+        if self.silent or force_silent:
             output += 'New player turn!\n\n'
         else:
             output += f"{self.players[self.index]} it's your turn!\n\n"
@@ -168,10 +168,16 @@ class GameState:
 
         print(await self.Serialize())
 
+        actual_guild = bot.get_guild(guild.id)
+
         if self.channel is None:
             output = 'Not listening to any channel'
         else:
-            output = f'Listening on {self.channel}'
+            channel_obj = actual_guild.get_channel(self.channel) if actual_guild else None
+            if channel_obj:
+                output = f'Listening on #{channel_obj.name} ({self.channel})'
+            else:
+                output = f'Listening on {self.channel} (channel not found in guild)'
         if self.is_test:
             output += '\nTEST MODE ON'
         if self.active:
@@ -185,8 +191,6 @@ class GameState:
             output += f'\nAlarm is set to  {self.alarm_hours}'
 
         await ctx.channel.send(output)
-
-        actual_guild = bot.get_guild(guild.id)
 
         if self.mapping == {}:
             await ctx.channel.send('Reading usernames into cache... one moment please...')
