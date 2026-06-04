@@ -1,0 +1,11 @@
+services:
+  ai-telephone-bot:
+    build: .
+    image: ai-telephone-bot:latest
+    container_name: ai-telephone-bot
+    restart: always
+    volumes:
+      - ./gamestate.json:/app/gamestate.json
+    environment:
+      - TZ=America/Denver
+      - PYTHONUNBUFFERED=1

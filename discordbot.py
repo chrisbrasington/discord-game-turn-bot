@@ -83,7 +83,6 @@ async def setup():
 
     # return bot, tree, guild, bot_token, state, admin_id
 
-game_images = []
 # bot, tree, guild, token, state, admin_id = setup()
 asyncio.run(setup())
 
@@ -106,10 +105,10 @@ async def listen(interaction):
 
 @tree.command(guild=guild, description="Adds player to game. If game is active, goes to end of list")
 async def add(interaction, name: str):
-    global bot, state, game_images, guild
+    global bot, state, guild
     if(not is_listening(interaction)):
         return
-    
+
     actual_guild = bot.get_guild(guild.id)
     # print(actual_guild)
 
@@ -128,7 +127,7 @@ async def add(interaction, name: str):
 
 @tree.command(guild=guild, description="Removes player from game")
 async def remove(interaction, name: str):
-    global bot, state, game_images, guild
+    global bot, state, guild
     if(not is_listening(interaction)):
         return
     
@@ -144,9 +143,8 @@ async def remove(interaction, name: str):
 async def begin(interaction):
     if(not is_listening(interaction)):
         return
-    global state, game_images
-    # reset game images in memory
-    game_images = []
+    global state
+    state.game_images = []
     await interaction.response.send_message("Starting new game")
     await state.Begin(interaction, bot)
 
@@ -164,9 +162,9 @@ async def begin(interaction):
 async def skip(interaction):
     if(not is_listening(interaction)):
         return
-    global state, game_images
+    global state
     await interaction.response.send_message("Skipping player")
-    await state.Next(interaction, bot, game_images)
+    await state.Next(interaction, bot, state.game_images)
 
 @tree.command(guild=guild, description="Prints current game status", name="print")
 async def print_game(interaction):
@@ -183,9 +181,9 @@ async def silent(interaction):
 
 @tree.command(guild=guild, description="Shows configuration of bot")
 async def config(interaction):
-    global state, game_images
+    global state
     await interaction.response.send_message("Current configuration")
-    await state.DisplayConfig(interaction, bot, guild, game_images)
+    await state.DisplayConfig(interaction, bot, guild, state.game_images)
 
 @tree.command(guild=guild, description="No you can't run this")
 async def talk(interaction, channel: str, message: str):
@@ -221,7 +219,7 @@ async def talk(interaction, channel: str, message: str):
 # on message sent to channel
 @bot.event
 async def on_message(ctx):
-    global state, game_images
+    global state
 
     if ctx.author == bot.user:
         return
@@ -276,7 +274,7 @@ async def on_message(ctx):
             elif("nice moves" in message_text or "dance" in message_text):
                 await ctx.channel.send("♪┏(・o・)┛♪┗ ( ・o・) ┓♪")
             elif("config" in message_text):
-                await state.DisplayConfig(ctx, bot, game_images)
+                await state.DisplayConfig(ctx, bot, state.game_images)
             else:
                 await ctx.channel.send(f"{message_text}, you too {ctx.author.mention}.")
 
@@ -306,17 +304,19 @@ async def on_message(ctx):
                     image_url = url_match.group(0)
 
             if image_url:
-                game_images.append((name, image_url))
+                state.game_images.append((name, image_url))
+                await state.Save()
                 print('recorded progress: ')
-                print(game_images)
+                print(state.game_images)
                 print("Progressing game")
                 containsImage = True
 
                 if(state.index == len(state.players)-1):
-                    await state.End(ctx, bot, game_images)
-                    game_images = []
+                    await state.End(ctx, bot, state.game_images)
+                    state.game_images = []
+                    await state.Save()
                 else:
-                    await state.Next(ctx, bot, game_images)
+                    await state.Next(ctx, bot, state.game_images)
 
             # do not progress
             if not containsImage:

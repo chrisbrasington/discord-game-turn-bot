@@ -12,8 +12,8 @@ class GameState:
     # read players from file if exists
     # reading game state from file should be done by deserization
     # at constructor of GameState object outside of this class
-    def __init__(self, active=False, alarm_hours=0, channel='🤖bot-commands', index=0, 
-        is_test=False, names=[], players=[], silent = False):
+    def __init__(self, active=False, alarm_hours=0, channel='🤖bot-commands', index=0,
+        is_test=False, names=[], players=[], silent=False, game_images=[]):
 
         self.active = active
         self.silent = silent
@@ -23,8 +23,10 @@ class GameState:
         self.alarm_hours = alarm_hours
         self.is_test = is_test
         self.index = index
-        self.channel = channel 
-        self.ReadPlayerFile(self.player_file, False)
+        self.channel = channel
+        self.game_images = list(game_images)
+        if not self.names:
+            self.ReadPlayerFile(self.player_file, False)
 
     # add player to names and game
     async def Add(self, bot, new_name: str, guild):
@@ -450,15 +452,16 @@ class GameStateEncoder(json.JSONEncoder):
             # You can return the encoded object as a dictionary, or as a JSON
             # string, depending on your needs.
             return {
-                'names': obj.names, 
-                'players': obj.players, 
-            # 'mapping': obj.mapping,   # NOT SERIALIZABLE!!    
+                'names': obj.names,
+                'players': obj.players,
+            # 'mapping': obj.mapping,   # NOT SERIALIZABLE!!
                 'alarm_hours': obj.alarm_hours,
                 'channel': obj.channel,
                 'is_test': obj.is_test,
                 'index': obj.index,
                 'active': obj.active,
-                'silent': obj.silent
+                'silent': obj.silent,
+                'game_images': [list(img) for img in obj.game_images],
             }
         # This is important: call the superclass method to raise an exception
         # for unsupported types
