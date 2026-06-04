@@ -226,15 +226,14 @@ class GameState:
             await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}!")
 
         if gif_buf is not None and gif_buf.getbuffer().nbytes <= 8 * 1024 * 1024:
-            lines = []
             for entry in game_images:
                 name = entry[0]
                 url = entry[1]
                 guess = entry[2] if len(entry) > 2 and entry[2] else ""
                 if guess:
-                    lines.append(f"**[{name}]({url})**: {guess}")
-            for line in lines:
-                await ctx.channel.send(line)
+                    await ctx.channel.send(f"**[{name}]({url})**: {guess}")
+                if 'cdn.discordapp.com' not in url:
+                    await ctx.channel.send(url)
             gif_buf.seek(0)
             await ctx.channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
         else:
