@@ -3,8 +3,8 @@ from datetime import datetime, time
 
 MAX_GIF_BYTES = 8 * 1024 * 1024
 
-async def post_results(channel, game_images, gif_buf):
-    print(f'[post_results] {len(game_images)} entries, gif={"yes" if gif_buf else "no"}')
+async def post_results(channel, game_images, gif_task=None):
+    print(f'[post_results] {len(game_images)} entries, gif_task={"yes" if gif_task else "no"}')
     for entry in game_images:
         name = entry[0]
         url = entry[1]
@@ -17,6 +17,7 @@ async def post_results(channel, game_images, gif_buf):
             print(f'[post_results] posting bare url for {name}')
             await channel.send(url)
 
+    gif_buf = (await gif_task) if gif_task is not None else None
     if gif_buf is not None and gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
         print('[post_results] posting gif')
         gif_buf.seek(0)
@@ -246,7 +247,7 @@ class GameState:
         print(game_images)
 
     # end current game
-    async def End(self, ctx, bot, game_images, gif_buf=None):
+    async def End(self, ctx, bot, game_images, gif_task=None):
         self.active = False
         print('Ending game...')
         if self.silent:
@@ -254,7 +255,7 @@ class GameState:
         else:
             await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}!")
 
-        await post_results(ctx.channel, game_images, gif_buf)
+        await post_results(ctx.channel, game_images, gif_task)
 
         game_images = []
 

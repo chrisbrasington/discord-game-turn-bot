@@ -445,8 +445,8 @@ async def test(interaction):
         return
     await interaction.response.defer(ephemeral=True)
 
-    gif_buf = await _make_gif(state.game_images)
-    await post_results(interaction.channel, state.game_images, gif_buf)
+    gif_task = asyncio.create_task(_make_gif(state.game_images))
+    await post_results(interaction.channel, state.game_images, gif_task)
     await interaction.followup.send("done", ephemeral=True)
 
 @tree.command(guild=guild, description="Generate an animated GIF of all recorded game images")
@@ -544,8 +544,8 @@ async def accept(interaction, url: str, guess: str = ""):
     await state.Save()
 
     if state.index == len(state.players) - 1:
-        gif_buf = await _make_gif(state.game_images)
-        await state.End(interaction, bot, state.game_images, gif_buf=gif_buf)
+        gif_task = asyncio.create_task(_make_gif(state.game_images))
+        await state.End(interaction, bot, state.game_images, gif_task=gif_task)
         state.game_images = []
         await state.Save()
     else:
@@ -665,8 +665,8 @@ async def on_message(ctx):
                 containsImage = True
 
                 if(state.index == len(state.players)-1):
-                    gif_buf = await _make_gif(state.game_images)
-                    await state.End(ctx, bot, state.game_images, gif_buf=gif_buf)
+                    gif_task = asyncio.create_task(_make_gif(state.game_images))
+                    await state.End(ctx, bot, state.game_images, gif_task=gif_task)
                     state.game_images = []
                     await state.Save()
                 else:
