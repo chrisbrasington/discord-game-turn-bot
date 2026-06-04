@@ -188,6 +188,17 @@ async def config(interaction):
     await state.DisplayConfig(interaction, bot, guild, state.game_images)
     await state.Display(interaction, force_silent=True)
 
+async def _send_lines(channel, lines):
+    chunk, length = [], 0
+    for line in lines:
+        if length + len(line) + 1 > 1900:
+            await channel.send("\n".join(chunk))
+            chunk, length = [], 0
+        chunk.append(line)
+        length += len(line) + 1
+    if chunk:
+        await channel.send("\n".join(chunk))
+
 async def _generate_gif(game_images):
     SIZE = 480
     HOLD_FRAMES = 5
@@ -223,9 +234,9 @@ async def _generate_gif(game_images):
             return await r.read()
 
     async with aiohttp.ClientSession() as session:
-        raw = await asyncio.gather(*[download(session, url) for _, url in game_images])
+        raw = await asyncio.gather(*[download(session, entry[1]) for entry in game_images])
 
-    images = [label(fit(Image.open(io.BytesIO(data))), name) for (name, _), data in zip(game_images, raw)]
+    images = [label(fit(Image.open(io.BytesIO(data))), entry[0]) for entry, data in zip(game_images, raw)]
 
     frames = []
     durations = []
@@ -250,15 +261,33 @@ async def _generate_gif(game_images):
     print(f"GIF size: {buf.getbuffer().nbytes / 1024 / 1024:.2f} MB")
     return buf
 
-@tree.command(guild=guild, description="Generate animated GIF of all recorded game images")
+@tree.command(guild=guild, description="Show game progress so far: guesses and GIF")
 async def test(interaction):
     global state
     if not state.game_images:
         await interaction.response.send_message("No images recorded yet.", ephemeral=True)
         return
-    await interaction.response.defer()
-    buf = await _generate_gif(state.game_images)
-    await interaction.followup.send(file=discord.File(buf, filename="telephone.gif"))
+    await interaction.response.send_message("Generating...", ephemeral=True)
+
+    gif_buf = await _generate_gif(state.game_images)
+
+    lines = []
+    for entry in state.game_images:
+        name = entry[0]
+        url = entry[1]
+        guess = entry[2] if len(entry) > 2 and entry[2] else ""
+        if guess:
+            lines.append(f"**[{name}]({url})**: {guess}")
+    for line in lines:
+        await interaction.channel.send(line)
+
+    MAX_GIF_BYTES = 8 * 1024 * 1024
+    if gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
+        gif_buf.seek(0)
+        await interaction.channel.send(file=discord.File(gif_buf, filename="telephone.gif"))
+    else:
+        for i, entry in enumerate(state.game_images, 1):
+            await interaction.channel.send(f'{i} - [{entry[0]}]({entry[1]})')
 
 @tree.command(guild=guild, description="No you can't run this")
 async def talk(interaction, channel: str, message: str):
@@ -308,7 +337,7 @@ async def delete(interaction, message_id: str):
         await interaction.response.send_message("Message not found", ephemeral=True)
 
 @tree.command(guild=guild, description="No you can't run this")
-async def accept(interaction, url: str):
+async def accept(interaction, url: str, guess: str = ""):
     global admin_id, bot, state
     if interaction.user.id != admin_id:
         await interaction.response.send_message("no", ephemeral=True)
@@ -328,11 +357,12 @@ async def accept(interaction, url: str):
 
     await interaction.response.send_message(f"Image found for {name}: {url}")
 
-    state.game_images.append((name, url))
+    state.game_images.append((name, url, guess))
     await state.Save()
 
     if state.index == len(state.players) - 1:
-        await state.End(interaction, bot, state.game_images)
+        gif_buf = await _generate_gif(state.game_images)
+        await state.End(interaction, bot, state.game_images, gif_buf=gif_buf)
         state.game_images = []
         await state.Save()
     else:
@@ -426,7 +456,25 @@ async def on_message(ctx):
                     image_url = url_match.group(0)
 
             if image_url:
-                state.game_images.append((name, image_url))
+                # Extract guess text: unwrap spoilers, strip URL and mentions
+                guess = re.sub(r"<@\d+>\s*", "", ctx.content)
+                guess = re.sub(r'\|\|(.+?)\|\|', r'\1', guess, flags=re.DOTALL)
+                if not ctx.attachments:
+                    guess = guess.replace(image_url, "")
+                guess = guess.strip(" -–—\n\t")
+
+                # If no text in this message, check the previous message from this player
+                if not guess:
+                    async for prev in ctx.channel.history(limit=10, before=ctx):
+                        if prev.author.id == ctx.author.id:
+                            prev_text = re.sub(r"<@\d+>\s*", "", prev.content)
+                            prev_text = re.sub(r'\|\|(.+?)\|\|', r'\1', prev_text, flags=re.DOTALL)
+                            prev_text = prev_text.strip()
+                            if prev_text:
+                                guess = prev_text
+                                break
+
+                state.game_images.append((name, image_url, guess))
                 await state.Save()
                 print('recorded progress: ')
                 print(state.game_images)
@@ -434,7 +482,8 @@ async def on_message(ctx):
                 containsImage = True
 
                 if(state.index == len(state.players)-1):
-                    await state.End(ctx, bot, state.game_images)
+                    gif_buf = await _generate_gif(state.game_images)
+                    await state.End(ctx, bot, state.game_images, gif_buf=gif_buf)
                     state.game_images = []
                     await state.Save()
                 else:

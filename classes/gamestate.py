@@ -217,7 +217,7 @@ class GameState:
         print(game_images)
 
     # end current game
-    async def End(self, ctx, bot, game_images):
+    async def End(self, ctx, bot, game_images, gif_buf=None):
         self.active = False
         print('Ending game...')
         if self.silent:
@@ -225,18 +225,28 @@ class GameState:
         else:
             await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}!")
 
-        await ctx.channel.send('Here\'s the result of the game:')
+        MAX_GIF_BYTES = 8 * 1024 * 1024
+        if gif_buf is not None and gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
+            lines = []
+            for entry in game_images:
+                name = entry[0]
+                url = entry[1]
+                guess = entry[2] if len(entry) > 2 and entry[2] else ""
+                if guess:
+                    lines.append(f"**[{name}]({url})**: {guess}")
+            for line in lines:
+                await ctx.channel.send(line)
+            gif_buf.seek(0)
+            await ctx.channel.send(file=discord.File(gif_buf, filename="telephone.gif"))
+        else:
+            await ctx.channel.send('Here\'s the result of the game:')
+            i = 1
+            for entry in game_images:
+                name = entry[0]
+                url = entry[1]
+                await ctx.channel.send(f'{i} - {name} [- link]({url})')
+                i += 1
 
-        i = 1
-        # print all the game progression of images
-        for player_name, image_url in game_images:
-
-            hyperlink = f" [- link]({image_url})"
-            print(hyperlink)
-            await ctx.channel.send(f'{i} - {player_name}{hyperlink}')
-            i+=1
-
-        # reset game images in memory
         game_images = []
 
         print('reloading alias in case of change')
