@@ -236,7 +236,7 @@ class GameState:
             for line in lines:
                 await ctx.channel.send(line)
             gif_buf.seek(0)
-            await ctx.channel.send(file=discord.File(gif_buf, filename="telephone.gif"))
+            await ctx.channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
         else:
             await ctx.channel.send('Here\'s the result of the game:')
             i = 1

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import asyncio, discord, json, os, random, re, signal, sys, io
+from typing import Optional
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
+import cv2
+import numpy as np
 from discord.ext import commands
 from datetime import datetime, time
 import time as regular_time
@@ -201,73 +204,221 @@ async def _send_lines(channel, lines):
 
 MAX_GIF_BYTES = 8 * 1024 * 1024
 
-async def _make_gif(game_images):
-    buf = await _generate_gif(game_images)
-    if buf.getbuffer().nbytes > MAX_GIF_BYTES:
-        print("GIF too large, retrying at 320px")
-        buf = await _generate_gif(game_images, size=320)
-    return buf
+# --- shared GIF helpers ---
 
-async def _generate_gif(game_images, size=480):
-    SIZE = size
-    HOLD_FRAMES = 5
-    HOLD_MS = 150
-    BLEND_FRAMES = 8
-    BLEND_MS = 60
+def _gif_fit(img, size):
+    img = img.convert("RGBA")
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 255))
+    img.thumbnail((size, size), Image.LANCZOS)
+    x = (size - img.width) // 2
+    y = (size - img.height) // 2
+    canvas.paste(img, (x, y), img)
+    return canvas
 
-    def fit(img):
-        img = img.convert("RGBA")
-        canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 255))
-        img.thumbnail((SIZE, SIZE), Image.LANCZOS)
-        x = (SIZE - img.width) // 2
-        y = (SIZE - img.height) // 2
-        canvas.paste(img, (x, y), img)
-        return canvas
+def _gif_label(img, name, size):
+    draw = ImageDraw.Draw(img)
+    try:
+        font = ImageFont.load_default(size=22)
+    except TypeError:
+        font = ImageFont.load_default()
+    pad = 6
+    bbox = draw.textbbox((0, 0), name, font=font)
+    text_h = bbox[3] - bbox[1]
+    bar_top = size - text_h - pad * 2
+    draw.rectangle([(0, bar_top), (size, size)], fill=(0, 0, 0, 180))
+    draw.text((pad, bar_top + pad), name, font=font, fill=(255, 255, 255, 255))
+    return img
 
-    def label(img, name):
-        draw = ImageDraw.Draw(img)
-        try:
-            font = ImageFont.load_default(size=22)
-        except TypeError:
-            font = ImageFont.load_default()
-        pad = 6
-        bbox = draw.textbbox((0, 0), name, font=font)
-        text_h = bbox[3] - bbox[1]
-        bar_top = SIZE - text_h - pad * 2
-        draw.rectangle([(0, bar_top), (SIZE, SIZE)], fill=(0, 0, 0, 180))
-        draw.text((pad, bar_top + pad), name, font=font, fill=(255, 255, 255, 255))
-        return img
-
-    async def download(session, url):
+async def _gif_download_all(game_images):
+    async def fetch(session, url):
         async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as r:
             return await r.read()
-
     async with aiohttp.ClientSession() as session:
-        raw = await asyncio.gather(*[download(session, entry[1]) for entry in game_images])
+        return await asyncio.gather(*[fetch(session, entry[1]) for entry in game_images])
 
-    images = [label(fit(Image.open(io.BytesIO(data))), entry[0]) for entry, data in zip(game_images, raw)]
+def _gif_save(frames, durations):
+    buf = io.BytesIO()
+    frames[0].save(buf, format="WEBP", save_all=True, append_images=frames[1:],
+                   duration=durations, loop=0, quality=85)
+    buf.seek(0)
+    return buf
 
-    frames = []
-    durations = []
+# --- transition blend functions ---
+# Each takes two RGBA PIL images and returns (frames, durations) for the transition only.
 
+def _blend_fade(img_a, img_b, n, size):
+    frames, durations = [], []
+    for f in range(1, n + 1):
+        t = f / (n + 1)
+        frames.append(Image.blend(img_a, img_b, t).convert("RGB"))
+        durations.append(60)
+    return frames, durations
+
+def _blend_zoom(img_a, img_b, n, size):
+    # Zoom into A until fully zoomed, then zoom out from B to normal
+    frames, durations = [], []
+    a_rgb, b_rgb = img_a.convert("RGB"), img_b.convert("RGB")
+    for f in range(1, n + 1):
+        t = f / (n + 1)
+        if t <= 0.5:
+            zoom = 1 + (t / 0.5) * 0.4
+            src = a_rgb
+        else:
+            zoom = 1 + ((1 - t) / 0.5) * 0.4
+            src = b_rgb
+        w = h = int(size * zoom)
+        scaled = src.resize((w, h), Image.LANCZOS)
+        x, y = (w - size) // 2, (h - size) // 2
+        frames.append(scaled.crop((x, y, x + size, y + size)))
+        durations.append(60)
+    return frames, durations
+
+def _blend_wipe(img_a, img_b, n, size):
+    frames, durations = [], []
+    a_rgb, b_rgb = img_a.convert("RGB"), img_b.convert("RGB")
+    for f in range(1, n + 1):
+        t = f / (n + 1)
+        cut = int(t * size)
+        frame = a_rgb.copy()
+        if cut > 0:
+            frame.paste(b_rgb.crop((0, 0, cut, size)), (0, 0))
+        frames.append(frame)
+        durations.append(60)
+    return frames, durations
+
+def _blend_pixel(img_a, img_b, n, size):
+    MAX_BLOCK = 16
+    def pixelate(img, block):
+        s = max(1, size // block)
+        return img.resize((s, s), Image.NEAREST).resize((size, size), Image.NEAREST)
+    frames, durations = [], []
+    a_rgb, b_rgb = img_a.convert("RGB"), img_b.convert("RGB")
+    for f in range(1, n + 1):
+        t = f / (n + 1)
+        if t <= 0.5:
+            block = max(2, int(MAX_BLOCK * (t / 0.5)))
+            frames.append(pixelate(a_rgb, block))
+        else:
+            block = max(2, int(MAX_BLOCK * ((1 - t) / 0.5)))
+            frames.append(pixelate(b_rgb, block))
+        durations.append(60)
+    return frames, durations
+
+def _blend_zoom_fade(img_a, img_b, n, size):
+    # Gentle zoom on A while crossfading to B
+    frames, durations = [], []
+    a_rgb = img_a.convert("RGB")
+    for f in range(1, n + 1):
+        t = f / (n + 1)
+        zoom = 1 + t * 0.15
+        w = h = int(size * zoom)
+        scaled = a_rgb.resize((w, h), Image.LANCZOS)
+        x, y = (w - size) // 2, (h - size) // 2
+        cropped = scaled.crop((x, y, x + size, y + size)).convert("RGBA")
+        frames.append(Image.blend(cropped, img_b, t).convert("RGB"))
+        durations.append(60)
+    return frames, durations
+
+_TRANSITIONS = {
+    'fade':      _blend_fade,
+    'zoom':      _blend_zoom,
+    'wipe':      _blend_wipe,
+    'pixel':     _blend_pixel,
+    'zoom+fade': _blend_zoom_fade,
+}
+
+# --- GIF generation ---
+
+async def _make_gif(game_images, style='fade'):
+    if style == 'morph':
+        return await _make_morph_gif(game_images)
+    buf = await _generate_gif(game_images, style=style)
+    if buf.getbuffer().nbytes > MAX_GIF_BYTES:
+        print(f"{style} GIF too large, retrying at 320px")
+        buf = await _generate_gif(game_images, style=style, size=320)
+    return buf
+
+async def _generate_gif(game_images, style='fade', size=480):
+    HOLD_FRAMES, HOLD_MS = 5, 150
+    BLEND_N = 10
+
+    raw = await _gif_download_all(game_images)
+    images = [_gif_label(_gif_fit(Image.open(io.BytesIO(d)), size), e[0], size)
+              for e, d in zip(game_images, raw)]
+
+    blend_fn = _TRANSITIONS.get(style, _blend_fade)
+    frames, durations = [], []
     for i, img in enumerate(images):
         for _ in range(HOLD_FRAMES):
             frames.append(img.convert("RGB"))
             durations.append(HOLD_MS)
         if i < len(images) - 1:
-            nxt = images[i + 1]
+            bf, bd = blend_fn(img, images[i + 1], BLEND_N, size)
+            frames.extend(bf)
+            durations.extend(bd)
+
+    buf = _gif_save(frames, durations)
+    print(f"GIF ({style}): {buf.getbuffer().nbytes / 1024 / 1024:.2f} MB")
+    return buf
+
+# --- morph GIF (optical flow) ---
+
+async def _make_morph_gif(game_images):
+    buf = await _generate_morph_gif(game_images)
+    if buf.getbuffer().nbytes > MAX_GIF_BYTES:
+        print("Morph GIF too large, retrying at 320px")
+        buf = await _generate_morph_gif(game_images, size=320)
+    return buf
+
+async def _generate_morph_gif(game_images, size=480):
+    HOLD_FRAMES, HOLD_MS = 5, 150
+    BLEND_FRAMES, BLEND_MS = 12, 50
+
+    raw = await _gif_download_all(game_images)
+    pil_images = [_gif_label(_gif_fit(Image.open(io.BytesIO(d)), size), e[0], size)
+                  for e, d in zip(game_images, raw)]
+    cv_images = [np.array(img.convert("RGB")) for img in pil_images]
+
+    frames, durations = [], []
+    h, w = size, size
+    grid_x, grid_y = np.meshgrid(np.arange(w, dtype=np.float32),
+                                  np.arange(h, dtype=np.float32))
+
+    for i, (pil_a, cv_a) in enumerate(zip(pil_images, cv_images)):
+        for _ in range(HOLD_FRAMES):
+            frames.append(pil_a.convert("RGB"))
+            durations.append(HOLD_MS)
+
+        if i < len(pil_images) - 1:
+            cv_b = cv_images[i + 1]
+            pil_b = pil_images[i + 1]
+
+            gray_a = cv2.cvtColor(cv_a, cv2.COLOR_RGB2GRAY)
+            gray_b = cv2.cvtColor(cv_b, cv2.COLOR_RGB2GRAY)
+            flow = cv2.calcOpticalFlowFarneback(
+                gray_a, gray_b, None,
+                pyr_scale=0.5, levels=3, winsize=15,
+                iterations=3, poly_n=5, poly_sigma=1.2, flags=0
+            )
+
             for f in range(1, BLEND_FRAMES + 1):
-                blended = Image.blend(img, nxt, f / (BLEND_FRAMES + 1))
-                frames.append(blended.convert("RGB"))
+                t = f / (BLEND_FRAMES + 1)
+                map_xa = (grid_x + t * flow[:, :, 0]).astype(np.float32)
+                map_ya = (grid_y + t * flow[:, :, 1]).astype(np.float32)
+                map_xb = (grid_x - (1 - t) * flow[:, :, 0]).astype(np.float32)
+                map_yb = (grid_y - (1 - t) * flow[:, :, 1]).astype(np.float32)
+                warped_a = cv2.remap(cv_a, map_xa, map_ya, cv2.INTER_LINEAR)
+                warped_b = cv2.remap(cv_b, map_xb, map_yb, cv2.INTER_LINEAR)
+                blended = cv2.addWeighted(warped_a, 1 - t, warped_b, t, 0)
+                frames.append(Image.fromarray(blended))
                 durations.append(BLEND_MS)
 
-    buf = io.BytesIO()
-    frames[0].save(
-        buf, format="GIF", save_all=True, append_images=frames[1:],
-        duration=durations, loop=0, optimize=False
-    )
-    buf.seek(0)
-    print(f"GIF size: {buf.getbuffer().nbytes / 1024 / 1024:.2f} MB")
+    for _ in range(HOLD_FRAMES):
+        frames.append(pil_images[-1].convert("RGB"))
+        durations.append(HOLD_MS)
+
+    buf = _gif_save(frames, durations)
+    print(f"Morph GIF: {buf.getbuffer().nbytes / 1024 / 1024:.2f} MB")
     return buf
 
 @tree.command(guild=guild, description="Show game progress so far: guesses and GIF")
@@ -293,16 +444,37 @@ async def test(interaction):
     gif_buf = await gif_task
     if gif_buf.getbuffer().nbytes <= MAX_GIF_BYTES:
         gif_buf.seek(0)
-        await interaction.channel.send(file=discord.File(gif_buf, filename="telephone.gif"))
+        await interaction.channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
     else:
         for i, entry in enumerate(state.game_images, 1):
             await interaction.channel.send(f'{i} - [{entry[0]}]({entry[1]})')
     await interaction.followup.send("done", ephemeral=True)
 
+@tree.command(guild=guild, description="Generate an animated GIF of all recorded game images")
+@app_commands.choices(style=[
+    app_commands.Choice(name='Fade',         value='fade'),
+    app_commands.Choice(name='Zoom',         value='zoom'),
+    app_commands.Choice(name='Wipe',         value='wipe'),
+    app_commands.Choice(name='Pixel Dissolve', value='pixel'),
+    app_commands.Choice(name='Zoom + Fade',  value='zoom+fade'),
+    app_commands.Choice(name='Morph (optical flow)', value='morph'),
+])
+async def gif(interaction, style: Optional[app_commands.Choice[str]] = None):
+    global state
+    if not state.game_images:
+        await interaction.response.send_message("No images recorded yet.", ephemeral=True)
+        return
+    style_val = style.value if style else 'fade'
+    await interaction.response.defer(ephemeral=True)
+    gif_buf = await _make_gif(state.game_images, style=style_val)
+    gif_buf.seek(0)
+    await interaction.channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
+    await interaction.followup.send("done", ephemeral=True)
+
 @tree.command(guild=guild, description="No you can't run this")
 async def talk(interaction, channel: str, message: str):
     global admin_id, bot, guild, state
-    
+
     actual_guild = bot.get_guild(guild.id)
 
     if interaction.user.id == admin_id:
