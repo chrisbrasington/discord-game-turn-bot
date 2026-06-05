@@ -8,7 +8,7 @@ import numpy as np
 from discord.ext import commands
 from datetime import datetime, time
 import time as regular_time
-from classes.gamestate import GameState, GameStateEncoder, post_results
+from classes.gamestate import GameState, GameStateEncoder, post_results, refresh_game_image_urls
 from discord import app_commands
 
 # Configure Discord bot
@@ -235,32 +235,14 @@ def _gif_label(img, name, size):
     draw.text((pad, bar_top + pad), name, font=font, fill=(255, 255, 255, 255))
     return img
 
-async def _refresh_discord_urls(urls):
-    """Refresh any expired Discord CDN attachment URLs via the Discord API."""
-    discord_urls = [u for u in urls if 'cdn.discordapp.com' in u or 'media.discordapp.net' in u]
-    if not discord_urls:
-        return {u: u for u in urls}
-    try:
-        route = discord.http.Route('POST', '/attachments/refresh-urls')
-        result = await bot.http.request(route, json={'attachment_urls': discord_urls})
-        url_map = {item['original']: item['refreshed'] for item in result.get('refreshed_urls', [])}
-        print(f"[gif] Refreshed {len(url_map)} Discord CDN URLs")
-        return {u: url_map.get(u, u) for u in urls}
-    except Exception as e:
-        print(f"[gif] URL refresh failed: {e}")
-        return {u: u for u in urls}
-
 async def _gif_download_all(game_images):
-    urls = [entry[1] for entry in game_images]
-    url_map = await _refresh_discord_urls(urls)
-
     async def fetch(session, url):
         async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as r:
             if r.status != 200:
                 raise ValueError(f"Image URL returned HTTP {r.status}: {url}")
             return await r.read()
     async with aiohttp.ClientSession() as session:
-        return await asyncio.gather(*[fetch(session, url_map[entry[1]]) for entry in game_images])
+        return await asyncio.gather(*[fetch(session, entry[1]) for entry in game_images])
 
 def _gif_save(frames, durations):
     buf = io.BytesIO()
@@ -455,6 +437,8 @@ async def test(interaction):
         return
     await interaction.response.defer(ephemeral=True)
 
+    state.game_images = await refresh_game_image_urls(bot, state.game_images)
+    await state.Save()
     gif_task = asyncio.create_task(_make_gif(state.game_images))
     await post_results(interaction.channel, state.game_images, gif_task)
     await interaction.followup.send("done", ephemeral=True)

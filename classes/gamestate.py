@@ -3,6 +3,21 @@ from datetime import datetime, time
 
 MAX_GIF_BYTES = 8 * 1024 * 1024
 
+async def refresh_game_image_urls(bot, game_images):
+    """Refresh expired Discord CDN URLs in game_images. Returns updated list."""
+    discord_urls = [e[1] for e in game_images if 'cdn.discordapp.com' in e[1] or 'media.discordapp.net' in e[1]]
+    if not discord_urls:
+        return game_images
+    try:
+        route = discord.http.Route('POST', '/attachments/refresh-urls')
+        result = await bot.http.request(route, json={'attachment_urls': discord_urls})
+        url_map = {item['original']: item['refreshed'] for item in result.get('refreshed_urls', [])}
+        print(f'[refresh] Refreshed {len(url_map)} Discord CDN URLs')
+        return [(e[0], url_map.get(e[1], e[1])) + tuple(e[2:]) for e in game_images]
+    except Exception as ex:
+        print(f'[refresh] URL refresh failed: {ex}')
+        return game_images
+
 async def post_results(channel, game_images, gif_task=None):
     print(f'[post_results] {len(game_images)} entries, gif_task={"yes" if gif_task else "no"}')
     for entry in game_images:
@@ -254,6 +269,10 @@ class GameState:
             await ctx.channel.send(f"Game over!")
         else:
             await ctx.channel.send(f"Game over! Congratulations {self.players[self.index]}!")
+
+        game_images = await refresh_game_image_urls(bot, game_images)
+        self.game_images = list(game_images)
+        await self.Save()
 
         await post_results(ctx.channel, game_images, gif_task)
 
