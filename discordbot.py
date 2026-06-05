@@ -235,12 +235,32 @@ def _gif_label(img, name, size):
     draw.text((pad, bar_top + pad), name, font=font, fill=(255, 255, 255, 255))
     return img
 
+async def _refresh_discord_urls(urls):
+    """Refresh any expired Discord CDN attachment URLs via the Discord API."""
+    discord_urls = [u for u in urls if 'cdn.discordapp.com' in u or 'media.discordapp.net' in u]
+    if not discord_urls:
+        return {u: u for u in urls}
+    try:
+        route = discord.http.Route('POST', '/attachments/refresh-urls')
+        result = await bot.http.request(route, json={'attachment_urls': discord_urls})
+        url_map = {item['original']: item['refreshed'] for item in result.get('refreshed_urls', [])}
+        print(f"[gif] Refreshed {len(url_map)} Discord CDN URLs")
+        return {u: url_map.get(u, u) for u in urls}
+    except Exception as e:
+        print(f"[gif] URL refresh failed: {e}")
+        return {u: u for u in urls}
+
 async def _gif_download_all(game_images):
+    urls = [entry[1] for entry in game_images]
+    url_map = await _refresh_discord_urls(urls)
+
     async def fetch(session, url):
         async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as r:
+            if r.status != 200:
+                raise ValueError(f"Image URL returned HTTP {r.status}: {url}")
             return await r.read()
     async with aiohttp.ClientSession() as session:
-        return await asyncio.gather(*[fetch(session, entry[1]) for entry in game_images])
+        return await asyncio.gather(*[fetch(session, url_map[entry[1]]) for entry in game_images])
 
 def _gif_save(frames, durations):
     buf = io.BytesIO()
@@ -455,7 +475,11 @@ async def gif(interaction, style: Optional[app_commands.Choice[str]] = None):
         return
     style_val = style.value if style else 'fade'
     await interaction.response.defer(ephemeral=True)
-    gif_buf = await _make_gif(state.game_images, style=style_val)
+    try:
+        gif_buf = await _make_gif(state.game_images, style=style_val)
+    except (ValueError, Exception) as e:
+        await interaction.followup.send(f"GIF failed: {e}", ephemeral=True)
+        return
     gif_buf.seek(0)
     await interaction.channel.send(file=discord.File(gif_buf, filename="telephone.webp"))
     await interaction.followup.send("done", ephemeral=True)
